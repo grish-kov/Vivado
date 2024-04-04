@@ -17,10 +17,10 @@
 **/*.tmp
 **/*.ui
 **/*(**)*
-my_test/my_test.cache
-my_test/my_test.hw
-my_test/my_test.ip_user_files
-my_test/my_test.sim
+my_test/my_test.cache/*
+my_test/my_test.hw/*
+my_test/my_test.ip_user_files/*
+my_test/my_test.sim/*
 
 # file formats that might be tracked in some cases but mostly not
 **/*.ampl
