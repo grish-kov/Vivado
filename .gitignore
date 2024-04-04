@@ -1,0 +1,38 @@
+# ignore everything except certain file formats in root folder
+/*
+!/.gitignore
+!/*TODO*
+!*.md
+!*.tcl
+#!*.wcfg
+
+# do not ignore sources folder except (mostly) temporary files
+!/*ip_repo
+!/*.srcs
+**/*~*
+**/*$*
+**/*.asv
+**/*.bkp
+**/*.lock4
+**/*.tmp
+**/*.ui
+**/*(**)*
+
+# file formats that might be tracked in some cases but mostly not
+**/*.ampl
+/**/*.dcp
+**/*.ods
+**/*.pdf
+**/*.phase
+# **/*.png
+**/*.pyc
+**/*.svg
+# **/*.txt
+
+# ignore all files in IP folders except XCI files (XCIX shouldn't be tracked 'cause they can be too big)
+/**/ip/**/*.*
+!/**/ip/*/*.xci
+/**/LaTeX/**/*.*
+!/**/LaTeX/**/*.py
+!/**/LaTeX/**/*.tex
+/**/.idea
