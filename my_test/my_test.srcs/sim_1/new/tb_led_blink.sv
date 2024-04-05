@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 module tb_led_blink
 #(
-    parameter CLK_FREQUENCY = 200.0e6, 
+    parameter CLK_FREQUENCY = 50.0e6, 
     parameter BLINK_PERIOD = 1
 );
     //-- Constants
@@ -17,7 +17,9 @@ module tb_led_blink
     .o_led ());
     //--
     always #(T_CLK/2) i_clk = ~i_clk;
-    initial begin i_rst = 1'b0;
-    #10e3 i_rst = 1'b0; #(500000*T_CLK) i_rst = 1'b0;
+    initial begin 
+        i_rst = 1'b0;
+        #10e3 i_rst = 1'b1; 
+        #(500000*T_CLK) i_rst = 1'b0;
     end
 endmodule
