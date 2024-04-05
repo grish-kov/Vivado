@@ -1,26 +1,25 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 04/04/2024 05:38:21 PM
-// Design Name: 
-// Module Name: tb_test
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+module tb_test
+    #(parameter T_CLK = 20)
+    ();
+    logic [3:0] x;
+    logic [1:0] a;
+    logic f;
 
-
-module tb_test(
-
+    test
+    UUT(
+        .x(x),
+        .a(a),
+        .f(f)
     );
+    
+    initial begin
+        
+        x[0] = T_CLK;
+        x[1] = (3 * T_CLK)/2;
+        x[2] = T_CLK - 5;
+        x[3] = (2*2*2*2 * T_CLK)/20;
+        
+    end
+
 endmodule
