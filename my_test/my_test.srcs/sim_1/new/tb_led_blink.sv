@@ -1,26 +1,23 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 04/05/2024 01:50:17 PM
-// Design Name: 
-// Module Name: tb_led_blink
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-module tb_led_blink(
-
-    );
+module tb_led_blink
+#(
+    parameter CLK_FREQUENCY = 200.0e6, 
+    parameter BLINK_PERIOD = 1
+);
+    //-- Constants
+    localparam T_CLK = int(1.0e9 / CLK_FREQUENCY); // ns
+    //-- Signals
+    bit i_clk = 1'b0; 
+    bit i_rst = 1'b0;
+    //-- 
+    led_blink# (.CLK_FREQUENCY(CLK_FREQUENCY),
+    .BLINK_PERIOD (BLINK_PERIOD)) UUT_2 (
+    .i_clk (i_clk ),
+    .i_rst(i_rst),
+    .o_led ());
+    //--
+    always #(T_CLK/2) i_clk = ~i_clk;
+    initial begin i_rst = 1'b0;
+    #10e3 i_rst = 1'b0; #(500000*T_CLK) i_rst = 1'b0;
+    end
 endmodule
