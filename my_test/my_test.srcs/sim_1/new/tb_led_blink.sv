@@ -5,13 +5,13 @@ module tb_led_blink
     parameter BLINK_PERIOD = 1
 );
   
-    localparam T_CLK = int(1.0e9 / CLK_FREQUENCY); // ns
+    localparam int T_CLK = (1.0e9 / CLK_FREQUENCY); // ns
     //-- Signals
     bit i_clk_n = 1'b0; 
     bit i_clk_p = 1'b0;
     bit i_rst = 1'b0;
    
-    led_blink# (.CLK_FREQUENCY(CLK_FREQUENCY),
+    top# (.CLK_FREQUENCY(CLK_FREQUENCY),
     .BLINK_PERIOD (BLINK_PERIOD)) UUT_2 (
     .i_clk_p (i_clk_p),
     .i_rst(i_rst),
