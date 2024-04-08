@@ -27,19 +27,16 @@ module led_blink
     parameter BLINK_PERIOD = 1.0 // секунды
 )
 (
-    (* MARK_DEBUG="true" *)
 
     input wire i_rst,
     input wire i_clk,
     output logic [3:0] o_led=4'b0001
 );
 
-    //-- Constants
     localparam int COUNTER_PERIOD = (BLINK_PERIOD * CLK_FREQUENCY);
     localparam int COUNTER_WIDTH = ($ceil($clog2(COUNTER_PERIOD + 1)));
 
-    //-- Counter
-    logic on_led=0; int i = 0;
+    logic on_led=0;
     
     reg [COUNTER_WIDTH - 1 : 0] counter_value = '0;
     always_ff @(posedge i_clk) begin     
