@@ -23,7 +23,7 @@ endmodule
 
 module led_blink
 #(
-    parameter CLK_FREQUENCY = 50.0e6, // Гц
+    parameter CLK_FREQUENCY = 200.0e6, // Гц
     parameter BLINK_PERIOD = 1.0 // секунды
 )
 (
@@ -43,18 +43,16 @@ module led_blink
        
         if (i_rst || counter_value == COUNTER_PERIOD-1) begin
             counter_value <= 0;
+           
         end 
         else begin
             counter_value <= counter_value + 1;
         end;
-        if (counter_value < COUNTER_PERIOD/2)
-            on_led <= 0;
-        else 
-            on_led <= 1;
-      
+        if (i_rst) o_led=4'b0001;
         if(counter_value == COUNTER_PERIOD/2) begin
             o_led <= o_led <<< 1;
             if(o_led == 4'b1000) o_led <= 4'b0001;
+//            o_led <= () ? : ;
         end;
         
     end

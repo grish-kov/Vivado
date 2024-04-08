@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 module tb_led_blink
 #(
-    parameter CLK_FREQUENCY = 50.0e6, 
-    parameter BLINK_PERIOD = 1
+    parameter CLK_FREQUENCY = 200.0e6, 
+    parameter BLINK_PERIOD = 1e-6
 );
   
     localparam int T_CLK = (1.0e9 / CLK_FREQUENCY); // ns
