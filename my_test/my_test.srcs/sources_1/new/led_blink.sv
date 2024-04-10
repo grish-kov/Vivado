@@ -3,7 +3,7 @@ module buff(
     input wire [1:0] i_rst,
     input wire i_clk_n,
     input wire i_clk_p,
-    output wire o_clk    
+    (* MARK_DEBUG="true" *) output wire o_clk    
 );
     IBUFDS #(
       .DIFF_TERM("FALSE"),
@@ -94,11 +94,11 @@ module led_blink2
 endmodule
 
 module top(
-    input wire [1:0] i_rst,
+    (* MARK_DEBUG="true" *) input wire [1:0] i_rst,
     input wire i_clk_p,
     input wire i_clk_n,
-    output logic [3:0] o_led1,
-    output logic [7:4] o_led2
+    (* MARK_DEBUG="true" *) output logic [3:0] o_led1,
+    (* MARK_DEBUG="true" *) output logic [7:4] o_led2
 );
     
     buff BUFF(
