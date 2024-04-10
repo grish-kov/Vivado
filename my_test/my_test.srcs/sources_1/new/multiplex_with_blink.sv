@@ -1,0 +1,109 @@
+`timescale 1ns / 1ps
+module buff(
+    input wire i_clk_n,
+    input wire i_clk_p,
+    output wire o_clk    
+);
+    IBUFDS #(
+      .DIFF_TERM("FALSE"),
+      .IBUF_LOW_PWR("TRUE"),
+      .IOSTANDARD("DEFAULT")
+    ) IBUFDS_inst (
+      .O(w_clk_in),
+      .I(i_clk_p),
+      .IB(i_clk_n)
+    );
+    
+    BUFG BUFG_inst (
+      .O(o_clk),
+      .I(w_clk_in)
+    );
+endmodule 
+
+module blink#(
+    parameter CLK_FREQUENCY  = 200.0e6, // Гц
+    parameter BLINK_PERIOD = 1.0 // секунды
+)
+(
+    input wire i_clk,
+    output logic [0:3] o_led='0
+);
+    
+    localparam int COUNTER_PERIOD = (BLINK_PERIOD * CLK_FREQUENCY);
+    localparam int COUNTER_WIDTH = ($ceil($clog2(COUNTER_PERIOD + 1)));
+    
+    reg [COUNTER_WIDTH - 1 : 0] counter_value = '0;
+    always_ff @(posedge i_clk) begin     
+       
+        if (counter_value == COUNTER_PERIOD-1)
+            counter_value <= 0;
+        else
+            counter_value <= counter_value + 1;
+
+        if(counter_value == COUNTER_PERIOD/2) 
+            o_led <= '0;
+        else
+            o_led <= '1;
+        
+    end
+    
+endmodule
+
+module multiplex(
+
+    input logic [3:0]	x,
+	input wire [1:0]	a,
+	output logic f 
+    );
+         
+    always @ (*) begin
+        case(a)
+            0       :  f = x[0];
+            1       :  f = x[1];
+            2       :  f = x[2];
+            3       :  f = x[3];      
+            default :  f = 0;
+        endcase
+    end
+endmodule
+module multiplex_with_blink
+#(
+    parameter CLK_FREQUENCY  = 200.0e6,// Гц
+    parameter real BLINK_PERIOD[0:3] = {1, 0.5, 2, 3}
+)
+(
+    input wire [1:0] i_rst,
+    input wire i_clk_p,
+    input wire i_clk_n,
+    output logic [0:3] o_led_d
+);
+    wire [0:3] m_led = '0;
+    
+    buff BUFF(
+        .i_clk_p(i_clk_p),
+        .i_clk_n(i_clk_n),
+        .i_rst(i_rst),
+        .o_clk(o_clk)
+    );
+    
+    
+    genvar i;
+    
+    generate for(i = 0; i <= 3; i++) begin
+        blink#(
+        .CLK_FREQUENCY(CLK_FREQUENCY),
+        .BLINK_PERIOD(BLINK_PERIOD[i])
+        )
+         led(
+            .i_clk(o_clk),
+            .o_led(m_led)    
+        );
+        end
+    endgenerate
+    multiplex mpl(
+        .x(m_led),
+        .f(w_led),
+        .a(i_rst)
+    );
+    assign o_led_d = '{default: w_led};
+endmodule
