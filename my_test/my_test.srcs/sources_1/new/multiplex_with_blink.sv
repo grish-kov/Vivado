@@ -86,6 +86,20 @@ module multiplex_with_blink
         .o_clk(o_clk)
     );    
     
+
+    //generate for(i = 0; i <=3; i++) begin
+        blink led[3:0](
+            .i_clk(o_clk),
+            .o_led(m_led)    
+        );
+            defparam led[0].BLINK_PERIOD = BLINK_PERIOD[0];
+            defparam led[1].BLINK_PERIOD = BLINK_PERIOD[1];
+            defparam led[2].BLINK_PERIOD = BLINK_PERIOD[2];
+            defparam led[3].BLINK_PERIOD = BLINK_PERIOD[3];
+            
+        
+        //end
+    //endgenerate
     generate for(i = 0; i <=3; i++) begin
         blink#(
         .CLK_FREQUENCY(CLK_FREQUENCY),
