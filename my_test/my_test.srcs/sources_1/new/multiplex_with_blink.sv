@@ -26,7 +26,7 @@ module blink#(
 )
 (
     input wire i_clk,
-    output logic [0:3] o_led='0
+    output logic o_led
 );
     
     localparam int COUNTER_PERIOD = (BLINK_PERIOD * CLK_FREQUENCY);
@@ -41,69 +41,67 @@ module blink#(
             counter_value <= counter_value + 1;
 
         if(counter_value == COUNTER_PERIOD/2) 
-            o_led <= '0;
+            o_led <= 0;
         else
-            o_led <= '1;
-        
+            o_led <= 1;
     end
     
 endmodule
 
 module multiplex(
 
-    input logic [3:0]	x,
-	input wire [1:0]	a,
-	output logic f 
+    input logic [3:0]	i_x,
+	input wire [1:0]	i_sel,
+	output logic o_f 
     );
          
     always @ (*) begin
-        case(a)
-            0       :  f = x[0];
-            1       :  f = x[1];
-            2       :  f = x[2];
-            3       :  f = x[3];      
-            default :  f = 0;
+        case(i_sel)
+            0       :  o_f = i_x[0];
+            1       :  o_f = i_x[1];
+            2       :  o_f = i_x[2];
+            3       :  o_f = i_x[3];      
+            default :  o_f = 0;
         endcase
     end
 endmodule
+
 module multiplex_with_blink
 #(
     parameter CLK_FREQUENCY  = 200.0e6,// Гц
-    parameter real BLINK_PERIOD[0:3] = {1, 0.5, 2, 3}
+    parameter real BLINK_PERIOD[3:0] = {1, 0.5, 2, 3}
 )
 (
     input wire [1:0] i_rst,
     input wire i_clk_p,
     input wire i_clk_n,
-    output logic [0:3] o_led_d
+    output logic [3:0] o_led_d
 );
-    wire [0:3] m_led = '0;
+    wire [3:0] m_led;
+    genvar i;
     
     buff BUFF(
         .i_clk_p(i_clk_p),
         .i_clk_n(i_clk_n),
-        .i_rst(i_rst),
         .o_clk(o_clk)
-    );
+    );    
     
-    
-    genvar i;
-    
-    generate for(i = 0; i <= 3; i++) begin
+    generate for(i = 0; i <=3; i++) begin
         blink#(
         .CLK_FREQUENCY(CLK_FREQUENCY),
         .BLINK_PERIOD(BLINK_PERIOD[i])
         )
          led(
             .i_clk(o_clk),
-            .o_led(m_led)    
+            .o_led(m_led[i])    
         );
         end
     endgenerate
+    
     multiplex mpl(
-        .x(m_led),
-        .f(w_led),
-        .a(i_rst)
+        .i_x(m_led),
+        .o_f(w_led),
+        .i_sel(i_rst)
     );
     assign o_led_d = '{default: w_led};
 endmodule
