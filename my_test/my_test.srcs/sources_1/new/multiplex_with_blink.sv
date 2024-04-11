@@ -100,17 +100,6 @@ module multiplex_with_blink
         
         //end
     //endgenerate
-    generate for(i = 0; i <=3; i++) begin
-        blink#(
-        .CLK_FREQUENCY(CLK_FREQUENCY),
-        .BLINK_PERIOD(BLINK_PERIOD[i])
-        )
-         led(
-            .i_clk(o_clk),
-            .o_led(m_led[i])    
-        );
-        end
-    endgenerate
     
     multiplex mpl(
         .i_x(m_led),
