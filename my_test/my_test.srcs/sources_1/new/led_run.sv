@@ -2,8 +2,8 @@
 
 module led_run
 #(
-    parameter G_CLK_FREQUENCY  = 200.0e6, // Гц
-    parameter G_BLINK_PERIOD = 1.0, // секунды
+    parameter G_CLK_FREQUENCY  = 200.0e6,
+    parameter G_BLINK_PERIOD = 1.0,
     parameter G_dir = 1 
 )
 (

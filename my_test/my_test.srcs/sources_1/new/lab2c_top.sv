@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module lab2c_top#(
-    parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
+    parameter G_CLK_FREQUENCY  = 200.0e6,
     parameter real G_BLINK_PERIOD[3:0] = {1, 0.5, 2, 3}
 )
 (

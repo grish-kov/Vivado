@@ -1,9 +1,9 @@
 `timescale 1ns / 1ps
 
 module lab2b_top#(
-    parameter G_CLK_FREQUENCY  = 200.0e6,   // Гц
-    parameter real G_BLINK_PERIOD [0:1] = {1, 0.5},      // секунды
-    parameter logic G_dir [0:1] =  {1, 0}              // направление
+    parameter G_CLK_FREQUENCY  = 200.0e6,
+    parameter real G_BLINK_PERIOD [0:1] = {1, 0.5},
+    parameter logic G_dir [0:1] =  {1, 0}
 )
 (
     (* MARK_DEBUG="true" *) input wire [1:0] i_rst,

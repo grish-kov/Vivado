@@ -1,9 +1,9 @@
 `timescale 1ns / 1ps
 module tb_lab2b
 #(
-    parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
+    parameter G_CLK_FREQUENCY  = 200.0e6,
     parameter real G_BLINK_PERIOD[0:1] = {1e-6, 1e-9},
-    parameter logic G_dir[0:1] =  {1, 0} // секунды
+    parameter logic G_dir[0:1] =  {1, 0}
 );
   
     localparam int C_T_CLK = 1.0e9 / G_CLK_FREQUENCY;

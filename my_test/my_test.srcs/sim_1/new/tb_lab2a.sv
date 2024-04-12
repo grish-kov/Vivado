@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 module tb_lab2a
 #(
-    parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
+    parameter G_CLK_FREQUENCY  = 200.0e6,
     parameter real G_BLINK_PERIOD = 1e-6
 );
   
