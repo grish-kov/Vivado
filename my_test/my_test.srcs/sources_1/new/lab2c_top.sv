@@ -2,13 +2,14 @@
 
 module lab2c_top#(
     parameter G_CLK_FREQUENCY  = 200.0e6,
-    parameter real G_BLINK_PERIOD[3:0] = {1, 0.5, 2, 3}
+    parameter real G_BLINK_PERIOD[3:0] = {1, 0.5, 2, 3},
+    parameter int  G_LED_WIDTH = 4
 )
 (
     input wire [1:0] i_rst,
     input wire i_clk_p,
     input wire i_clk_n,
-    output logic [3:0] o_led_d
+    output logic [G_LED_WIDTH - 1:0] o_led_d
 );
     wire [3:0] m_led;
     
