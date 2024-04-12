@@ -23,9 +23,9 @@ endmodule
 
 module led_blink1
 #(
-    parameter CLK_FREQUENCY  = 200.0e6, // Гц
-    parameter BLINK_PERIOD = 1.0, // секунды
-    parameter dir = 1 
+    parameter G_CLK_FREQUENCY  = 200.0e6, // Гц
+    parameter G_BLINK_PERIOD = 1.0, // секунды
+    parameter G_dir = 1 
 )
 (
     input wire i_rst,
@@ -33,13 +33,13 @@ module led_blink1
     output logic [3:0] o_led1=4'b0001
 );
     
-    localparam int COUNTER_PERIOD = (BLINK_PERIOD * CLK_FREQUENCY);
-    localparam int COUNTER_WIDTH = ($ceil($clog2(COUNTER_PERIOD + 1)));
+    localparam int C_COUNTER_PERIOD = (G_BLINK_PERIOD * G_CLK_FREQUENCY);
+    localparam int C_COUNTER_WIDTH = ($ceil($clog2(C_COUNTER_PERIOD + 1)));
     
-    reg [COUNTER_WIDTH - 1 : 0] counter_value = '0;
+    reg [C_COUNTER_WIDTH - 1 : 0] counter_value = '0;
     always_ff @(posedge i_clk) begin     
        
-        if (i_rst || counter_value == COUNTER_PERIOD-1) begin
+        if (i_rst || counter_value == C_COUNTER_PERIOD-1) begin
             counter_value <= 0;
            
         end 
@@ -47,8 +47,8 @@ module led_blink1
             counter_value <= counter_value + 1;
         end;
         if (i_rst) o_led1=4'b0001;
-        if(counter_value == COUNTER_PERIOD/2) begin
-            if(dir) begin
+        if(counter_value == C_COUNTER_PERIOD/2) begin
+            if(G_dir) begin
                 o_led1 <= o_led1 <<< 1;
                 if(o_led1 == 4'b1000) o_led1 <= 4'b0001;
             end
@@ -62,48 +62,11 @@ module led_blink1
     
 endmodule
 
-// module led_blink2
-// #(
-//     parameter CLK_FREQUENCY = 50.0e6, // Гц
-//     parameter BLINK_PERIOD = 1.0 // секунды
-// )
-// (
-
-//     input wire i_rst,
-//     input wire i_clk,
-//     output logic [7:4] o_led2=4'b0001
-// );
-
-//     localparam int COUNTER_PERIOD = (BLINK_PERIOD * CLK_FREQUENCY);
-//     localparam int COUNTER_WIDTH = ($ceil($clog2(COUNTER_PERIOD + 1)));
-
-    
-//     reg [COUNTER_WIDTH - 1 : 0] counter_value = '0;
-//     always_ff @(posedge i_clk) begin     
-       
-//         if (i_rst || counter_value == COUNTER_PERIOD-1) begin
-//             counter_value <= 0;
-           
-//         end 
-//         else begin
-//             counter_value <= counter_value + 1;
-//         end;
-//         if (i_rst) o_led2=4'b0001;
-//         if(counter_value == COUNTER_PERIOD/2) begin
-//             o_led2 <= o_led2 <<< 1;
-//             if(o_led2 == 4'b1000) o_led2 <= 4'b0001;
-// //            o_led <= () ? : ;
-//         end;
-        
-//     end
-    
-// endmodule
-
 module top
 #(
-    parameter CLK_FREQUENCY  = 200.0e6,// Гц
-    parameter real BLINK_PERIOD[0:1] = {1, 0.5},
-    parameter logic dir[0:1] =  {1, 0} // секунды
+    parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
+    parameter real G_BLINK_PERIOD[0:1] = {1, 0.5},
+    parameter logic G_dir[0:1] =  {1, 0} // секунды
 )
 (
     (* MARK_DEBUG="true" *) input wire [1:0] i_rst,
@@ -113,7 +76,7 @@ module top
     // (* MARK_DEBUG="true" *) output logic [7:4] o_led2
 );
     
-    buff BUFF(
+    buff u_buf(
         .i_clk_p(i_clk_p),
         .i_clk_n(i_clk_n),
         .i_rst(i_rst),
@@ -123,22 +86,16 @@ module top
     
     generate for(i = 0; i <= 1; i++) begin
         led_blink1#(
-        .CLK_FREQUENCY(CLK_FREQUENCY),
-        .BLINK_PERIOD(BLINK_PERIOD[i]),
-        .dir(dir[i])
+            .G_CLK_FREQUENCY(G_CLK_FREQUENCY),
+            .G_BLINK_PERIOD(G_BLINK_PERIOD[i]),
+            .G_dir(G_dir[i])
         )
-         led(
+         u_led(
             .i_rst(i_rst[i]),
             .i_clk(o_clk),
             .o_led1(o_led1[4 * (i+1) - 1 : 4 * i])    
         );
         end
     endgenerate
-    
-    // led_blink2 led2(
-    //     .i_rst(i_rst[1]),
-    //     .i_clk(o_clk),
-    //     .o_led2(o_led2)    
-    // );
     
 endmodule

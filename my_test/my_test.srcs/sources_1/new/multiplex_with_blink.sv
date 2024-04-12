@@ -21,26 +21,26 @@ module buff(
 endmodule 
 
 module blink#(
-    parameter CLK_FREQUENCY  = 200.0e6, // Гц
-    parameter BLINK_PERIOD = 1.0 // секунды
+    parameter G_CLK_FREQUENCY  = 200.0e6, // Гц
+    parameter G_BLINK_PERIOD = 1.0 // секунды
 )
 (
     input wire i_clk,
     output logic o_led
 );
     
-    localparam int COUNTER_PERIOD = (BLINK_PERIOD * CLK_FREQUENCY);
-    localparam int COUNTER_WIDTH = ($ceil($clog2(COUNTER_PERIOD + 1)));
+    localparam int C_COUNTER_PERIOD = (G_BLINK_PERIOD * G_CLK_FREQUENCY);
+    localparam int C_COUNTER_WIDTH = ($ceil($clog2(C_COUNTER_PERIOD + 1)));
     
-    reg [COUNTER_WIDTH - 1 : 0] counter_value = '0;
+    reg [C_COUNTER_WIDTH - 1 : 0] counter_value = '0;
     always_ff @(posedge i_clk) begin     
        
-        if (counter_value == COUNTER_PERIOD-1)
+        if (counter_value == C_COUNTER_PERIOD-1)
             counter_value <= 0;
         else
             counter_value <= counter_value + 1;
 
-        if(counter_value == COUNTER_PERIOD/2) 
+        if(counter_value == C_COUNTER_PERIOD/2) 
             o_led <= 0;
         else
             o_led <= 1;
@@ -66,10 +66,10 @@ module multiplex(
     end
 endmodule
 
-module multiplex_with_blink
+module top_multiplex_with_blink
 #(
-    parameter CLK_FREQUENCY  = 200.0e6,// Гц
-    parameter real BLINK_PERIOD[3:0] = {1, 0.5, 2, 3}
+    parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
+    parameter real G_BLINK_PERIOD[3:0] = {1, 0.5, 2, 3}
 )
 (
     input wire [1:0] i_rst,
@@ -78,30 +78,23 @@ module multiplex_with_blink
     output logic [3:0] o_led_d
 );
     wire [3:0] m_led;
-    genvar i;
     
-    buff BUFF(
+    buff u_buf(
         .i_clk_p(i_clk_p),
         .i_clk_n(i_clk_n),
         .o_clk(o_clk)
     );    
     
-
-    //generate for(i = 0; i <=3; i++) begin
-        blink led[3:0](
+        blink u_led[3:0](
             .i_clk(o_clk),
             .o_led(m_led)    
         );
-            defparam led[0].BLINK_PERIOD = BLINK_PERIOD[0];
-            defparam led[1].BLINK_PERIOD = BLINK_PERIOD[1];
-            defparam led[2].BLINK_PERIOD = BLINK_PERIOD[2];
-            defparam led[3].BLINK_PERIOD = BLINK_PERIOD[3];
-            
-        
-        //end
-    //endgenerate
+            defparam u_led[0].G_BLINK_PERIOD = G_BLINK_PERIOD[0];
+            defparam u_led[1].G_BLINK_PERIOD = G_BLINK_PERIOD[1];
+            defparam u_led[2].G_BLINK_PERIOD = G_BLINK_PERIOD[2];
+            defparam u_led[3].G_BLINK_PERIOD = G_BLINK_PERIOD[3];
     
-    multiplex mpl(
+    multiplex u_mpl(
         .i_x(m_led),
         .o_f(w_led),
         .i_sel(i_rst)
