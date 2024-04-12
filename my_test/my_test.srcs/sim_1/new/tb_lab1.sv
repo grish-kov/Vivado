@@ -1,12 +1,12 @@
 `timescale 1ns / 1ps
-module tb_test
+module tb_lab1
     #(parameter G_T_CLK = 20)
     ();
     logic [3:0] i_x;
     logic [1:0] i_a;
     logic o_f;
     
-    test
+    lab1_top
     UUT(
         .i_x(i_x),
         .i_a(i_a),

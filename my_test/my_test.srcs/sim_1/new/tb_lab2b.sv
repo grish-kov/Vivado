@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module tb_led_blink
+module tb_lab2b
 #(
     parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
     parameter real G_BLINK_PERIOD[0:1] = {1e-6, 1e-9},
@@ -8,11 +8,10 @@ module tb_led_blink
   
     localparam int C_T_CLK = 1.0e9 / G_CLK_FREQUENCY;
 
-    
     bit i_clk = 1'b0;
     bit i_rst = 1'b0;
    
-    top#(
+    lab2b_top#(
     .G_CLK_FREQUENCY(G_CLK_FREQUENCY),
     .G_BLINK_PERIOD (G_BLINK_PERIOD),
     .G_dir(G_dir)

@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module tb_m_w_b #(
+module tb_lab2c #(
         parameter G_CLK_FREQUENCY  = 200.0e6,// Гц
         parameter real G_BLINK_PERIOD[0:3] = {1e-8, 0.5e-7, 2e-8, 1.5e-8}
     );
@@ -7,10 +7,9 @@ module tb_m_w_b #(
     
     bit i_clk = 1'b0;
     bit [0:1] i_rst = 2'b00;
-    logic o_led_d = '0;
+    logic o_led_d;
     
-    
-    top_multiplex_with_blink#( 
+    lab2c_top#( 
         .G_CLK_FREQUENCY(G_CLK_FREQUENCY),
         .G_BLINK_PERIOD(G_BLINK_PERIOD))
     UUT(
