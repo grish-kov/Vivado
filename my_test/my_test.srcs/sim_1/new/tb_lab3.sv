@@ -28,6 +28,8 @@ module tb_lab3(
     always #(1.1e3) i_dB = ~i_dB;
     initial begin
         i_rst = 1'b1;
-        #100 i_rst = 1'b0;
+        #10 i_rst = 1'b0;
+        #500 i_rst = 1'b1; 
+        #1000 i_rst = 1'b0;
     end
 endmodule
