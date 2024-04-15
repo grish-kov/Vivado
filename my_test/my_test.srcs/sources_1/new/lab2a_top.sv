@@ -2,13 +2,14 @@
 
 module lab2a_top#(
     parameter G_CLK_FREQUENCY  = 200.0e6,
-    parameter real G_BLINK_PERIOD = 1
+    parameter real G_BLINK_PERIOD = 1,
+    parameter int G_LED_WIDTH = 4
 )
 (
     (* MARK_DEBUG="true" *) input wire [1:0] i_rst,
     input wire i_clk_p,
     input wire i_clk_n,
-    (* MARK_DEBUG="true" *) output logic [3:0] o_led
+    (* MARK_DEBUG="true" *) output logic [G_LED_WIDTH - 1:0] o_led
 );
     
     buff u_buf(
@@ -20,7 +21,8 @@ module lab2a_top#(
     
     led_blink#(
         .G_CLK_FREQUENCY(G_CLK_FREQUENCY),
-        .G_BLINK_PERIOD(G_BLINK_PERIOD)
+        .G_BLINK_PERIOD(G_BLINK_PERIOD),
+        .G_LED_WIDTH(G_LED_WIDTH)
     )
      u_led(
         .i_rst(i_rst),

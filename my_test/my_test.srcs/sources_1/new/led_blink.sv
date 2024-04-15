@@ -3,12 +3,13 @@
 module led_blink
 #(
     parameter G_CLK_FREQUENCY  = 200.0e6,
-    parameter G_BLINK_PERIOD = 1.0
+    parameter G_BLINK_PERIOD = 1.0,
+    parameter int G_LED_WIDTH = 4
 )
 (
     input wire i_rst,
     input wire i_clk,
-    output logic [3:0] o_led='0
+    output logic [G_LED_WIDTH:0] o_led='0
 );
     
     logic on_led = 0;
