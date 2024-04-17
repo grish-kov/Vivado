@@ -2,7 +2,7 @@
 
 (* KEEP_HIERARCHY = "Yes" *)
 module CRC #(
-    parameter int                   POLY_WIDTH = 32, // Size of The Polynomial Vector
+    parameter int                   POLY_WIDTH = 8, // Size of The Polynomial Vector
     parameter int                   WORD_WIDTH = 32, // Size of The Input Words Vector
     parameter int                   WORD_COUNT = 3, // Number of Words To Calculate CRC, 0 - Always Calculate CRC On Every Input Word
     parameter bit [POLY_WIDTH-1:0]  POLYNOMIAL = '0, // Polynomial Bit Vector
