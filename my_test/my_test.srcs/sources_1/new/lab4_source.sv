@@ -1,8 +1,9 @@
 `timescale 1ns / 1ps
 module lab4_source #(
     parameter N = 10,
-    parameter G_BYT = 1
-   
+    parameter G_BYT = 1,
+    int B = 1, 
+	int W = 8 * B
     ) (
     input i_clk, 
     input i_rst,
@@ -11,14 +12,32 @@ module lab4_source #(
 	output logic m_axis_tlast,
 	output reg [N - 1:0] m_axis_tdata
 );
-    CRC u_crc (
-    
-        .i_crc_a_clk_p  (i_clk),
-        .i_crc_s_rst_p  (i_rst),
-        .i_crc_ini_vld  (m_axis_tvalid),    
-        .i_crc_ini_dat  (m_axis_tdata)
-    
-    );
+    logic         s_ready = '0;
+    logic         s_valid = '0;
+    logic [W-1:0] s_data  = '0;
+
+    CRC #(
+		.POLY_WIDTH (W   ), // Size of The Polynomial Vector
+		.WORD_WIDTH (W   ), // Size of The Input Words Vector
+		.WORD_COUNT (0   ), // Number of Words To Calculate CRC, 0 - Always Calculate CRC On Every Input Word
+		.POLYNOMIAL ('hD5), // Polynomial Bit Vector
+		.INIT_VALUE ('1  ), // Initial Value
+		.CRC_REF_IN ('0  ), // Beginning and Direction of Calculations: 0 - Starting With MSB-First; 1 - Starting With LSB-First
+		.CRC_REFOUT ('0  ), // Determines Whether The Inverted Order of The Bits of The Register at The Entrance to The Xor Element
+		.BYTES_RVRS ('0  ), // Input Word Byte Reverse
+		.XOR_VECTOR ('0  ), // CRC Final Xor Vector
+		.NUM_STAGES (2   )  // Number of Register Stages, Equivalent Latency in Module. Minimum is 1, Maximum is 3.
+	) u_crc (
+		.i_crc_a_clk_p (i_clk  ), // Rising Edge Clock
+		.i_crc_s_rst_p (i_rst), // Sync Reset, Active High. Reset CRC To Initial Value.
+		.i_crc_ini_vld ('0), // Input Initial Valid
+		.i_crc_ini_dat ('0), // Input Initial Value
+		.i_crc_wrd_vld (m_axis_tvalid), // Word Data Valid Flag 
+		.o_crc_wrd_rdy (s_ready), // Ready To Recieve Word Data
+		.i_crc_wrd_dat (m_axis.tdata), // Word Data
+		.o_crc_res_vld (s_valid), // Output Flag of Validity, Active High for Each WORD_COUNT Number
+		.o_crc_res_dat (s_data)  // Output CRC from Each Input Word
+	);
 
     enum logic [7:0]{
 
@@ -94,7 +113,7 @@ module lab4_source #(
                     
                     if (q_cnt <= N) begin
 
-                        m_axis.tdata  <= 97 + q_cnt;
+                        m_axis.tdata  <= q_cnt;
                         q_cnt <= q_cnt + 1;
 
                     end
@@ -108,11 +127,20 @@ module lab4_source #(
                 end
                 S4: begin
 
-                    q_crnt_s <= S5;
-                        
+                    /*
+                        Проверка контрольной суммы
+                    */
+
+                   if (q_cnt <= N)
+                        q_cnt <= q_cnt + 1;
+                    else
+                        q_crnt_s <= S5;
+                                            
                 end
                 S5: begin
-                
+                    
+                    m_axis_tlast <= 1;
+                    m_axis_tvalid <= 0;
                     q_crnt_s <= S6;
                     
                 end
