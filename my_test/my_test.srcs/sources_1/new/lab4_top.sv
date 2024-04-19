@@ -6,19 +6,24 @@ interface if_axis #(parameter int N = 1) ();
 	logic         tlast ;
 	logic [W-1:0] tdata ;
 	
+	modport m (input tready, output tvalid, tlast, tdata);
+	modport s (output tready, input tvalid, tlast, tdata);
+	
 endinterface
 
 module lab4_top #(
     parameter G_BYT = 1
-    
 ) (
     input       i_clk,
     input [2:0] i_rst
-);
-    
-    if_axis #(.N(G_BYT)) mst_fifo();
-    if_axis #(.N(G_BYT)) slv_fifo();
-    
+//    ,
+//    if_axis.m mst_fifo,
+//    if_axis.s slv_fifo
+);  
+
+    if_axis mst_fifo();
+    if_axis slv_fifo();
+
     
     lab4_source u_source (
         .i_clk              (i_clk),
