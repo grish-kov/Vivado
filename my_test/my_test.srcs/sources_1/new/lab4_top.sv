@@ -14,24 +14,17 @@ endinterface
 module lab4_top #(
     parameter G_BYT = 1
 ) (
-    input       i_clk,
-    input [2:0] i_rst
-//    ,
-//    if_axis.m mst_fifo,
-//    if_axis.s slv_fifo
+    input wire          i_clk,
+    input wire [2:0]    i_rst
 );  
 
     if_axis mst_fifo();
     if_axis slv_fifo();
-
     
     lab4_source u_source (
         .i_clk              (i_clk),
         .i_rst              (i_rst[0]),
-        .m_axis_tvalid      (mst_fifo.tvalid),
-        .m_axis_tready      (mst_fifo.tready),
-        .m_axis_tdata       (mst_fifo.tdata),
-        .m_axis_tlast       (mst_fifo.tlast)
+        .m_axis             (mst_fifo)
         );
     
     axis_data_fifo_0 u_fifo (
@@ -53,14 +46,12 @@ module lab4_top #(
         .prog_empty         (prog_empty),
         .prog_full          (prog_full)
         );
-    
-    (* keep_hierarchy="yes" *) lab4_sink u_sink (
+        
+    (* keep_hierarchy="yes" *) 
+    lab4_sink u_sink (
         .i_clk              (i_clk),   
         .i_rst              (i_rst[2]),
-        .s_axis_tvalid      (slv_fifo.tvalid),
-        .s_axis_tready      (slv_fifo.tready),
-        .s_axis_tdata       (slv_fifo.tdata),
-        .s_axis_tlast       (slv_fifo.tlast)
+        .s_axis             (slv_fifo)
         );
    
 endmodule
