@@ -1,12 +1,13 @@
 `timescale 1ns / 1ps
 module lab4_sink #(
-    parameter N = 8,
-    int         B           = 1, 
-    int         W           = 8 * B
+    parameter   N = 8,
+    int         B = 1, 
+    int         W = 8 * B
 )(
-    input i_clk, 
-    input i_rst,
-    if_axis.s s_axis
+    input       i_clk, 
+    input       i_rst,
+    output      o_err,
+    if_axis.s   s_axis
 );
     
         logic [7:0] o_crc_res_dat = '0;
@@ -20,9 +21,9 @@ module lab4_sink #(
 		.WORD_COUNT (0),          // Number of Words To Calculate CRC, 0 - Always Calculate CRC On Every Input Word
 		.POLYNOMIAL ('hD5),       // Polynomial Bit Vector
 		.INIT_VALUE ('h01),       // Initial Value
-		.CRC_REF_IN ('0),         // Beginning and Direction of Calculations: 0 - Starting With MSB-First; 1 - Starting With LSB-First
-		.CRC_REFOUT ('0),         // Determines Whether The Inverted Order of The Bits of The Register at The Entrance to The Xor Element
-		.BYTES_RVRS ('0),         // Input Word Byte Reverse
+//		.CRC_REF_IN ('0),         // Beginning and Direction of Calculations: 0 - Starting With MSB-First; 1 - Starting With LSB-First
+//		.CRC_REFOUT ('0),         // Determines Whether The Inverted Order of The Bits of The Register at The Entrance to The Xor Element
+//		.BYTES_RVRS ('0),         // Input Word Byte Reverse
 		.XOR_VECTOR ('0),         // CRC Final Xor Vector
 		.NUM_STAGES (2)           // Number of Register Stages, Equivalent Latency in Module. Minimum is 1, Maximum is 3.
 	) u_crc1 (
@@ -36,11 +37,21 @@ module lab4_sink #(
 		.o_crc_res_vld (),                // Output Flag of Validity, Active High for Each WORD_COUNT Number
 		.o_crc_res_dat (o_crc_res_dat)    // Output CRC from Each Input Word
 	);
-
-    logic [7:0] t_data;
-
+    
+    logic q_err;
+    
      always_ff @(posedge i_clk) begin
         s_axis.tready <= '1;
-        t_data <= s_axis.tdata;
+        
+        
+        
+        
+        
+        if (s_axis.tdata == o_crc_res_dat) 
+            q_err <= 1;
+        else q_err <= 0;
+        
     end
+    
+    assign o_err = q_err;
 endmodule
