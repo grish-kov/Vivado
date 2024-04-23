@@ -43,7 +43,6 @@ module lab4_source #(
 
     enum logic [7:0]{
 
-        S  /*  STOP      */ = 8'b0000000,
         S0 /*  READY     */ = 8'b0000001,
         S1 /*  INIT_H    */ = 8'b0000010,
         S2 /*  INIT_L    */ = 8'b0000100,
@@ -74,45 +73,61 @@ module lab4_source #(
             m_axis.tlast  <= '0;
             m_axis.tdata  <= '0;
 
-        end else
-                  
+        end else 
             case (q_crnt_s)
-                S0: begin
+                S0: begin   // init state
                     
-                    if(m_axis.tready)
+                    if(m_axis.tready) begin
+
+                        m_axis.tvalid <= 0;
+                        m_axis.tlast <= 0; 
                         q_crnt_s <= S1;
-                    
-                end
-                S1: begin
-                    
-                    m_axis.tlast <= 0;
-                    m_axis.tvalid <= 1; 
-                    m_axis.tdata <= 72;
-                    
-                    if (m_axis.tready & m_axis.tvalid) begin
-                        
-                        m_crc_rst <= 1;
-                        q_crnt_s <= S2;
-                        m_crc_rst <= 0;
-                        
+
                     end
                     
                 end
-                S2: begin
+                S1: begin   // send header
+                    
+                    if (m_axis.tready & !m_axis.tvalid)
+                        m_axis.tvalid <= 1;                         
+
+                    m_axis.tdata <= 72;
+
+                    m_crc_rst <= 1;
+
+                    if (m_axis.tready & m_axis.tvalid) begin
+                        
+                        m_crc_rst <= 0;
+                        m_axis.tvalid <= 0; 
+                        q_crnt_s <= S2;
+                        
+                    end
+
+                end
+                S2: begin   // send length
+                     
+                    if (m_axis.tready & !m_axis.tvalid)
+                        m_axis.tvalid <= 1;
 
                     m_axis.tdata <= N;
 
-                    if (m_axis.tready & m_axis.tvalid) begin
+                     if (m_axis.tready & m_axis.tvalid) begin
                         
-                        q_crnt_s <= S3;
+                        m_axis.tvalid <= 0;
                         q_cnt <= 0;
-                                                    
+                        q_crnt_s <= S3;
+                        
                     end
-                    
+
                 end
-                S3: begin
-                    
-                    q_vld <= (m_axis.tready & m_axis.tvalid);
+                S3: begin   // send payload
+
+                    if (m_axis.tready & !m_axis.tvalid) begin
+                        
+                        m_axis.tvalid <= 1;
+                        q_vld <= 1;
+
+                    end
 
                     if (m_axis.tready & q_cnt < N) begin
 
@@ -126,40 +141,49 @@ module lab4_source #(
                         
                         q_vld <= '0;
                         m_axis.tvalid <= 0;
-                        q_crnt_s <= S4;
                         q_cnt <= 0;
+                        q_crnt_s <= S4;
 
                     end
 
                 end
-                S4: begin
-                    
+                S4: begin   // crc pause
+                            
 //                    if (q_cnt <= CRC_PAUSE)
 //                        q_cnt <= q_cnt + 1;
 //                    else 
-                        q_crnt_s <= S5;
-                                              
+                    q_crnt_s <= S5;
+                                 
                 end
-                S5: begin
-                
-                    m_axis.tvalid <= 1;
-                    m_axis.tlast <= 1;
+                S5: begin   // send crc
+
+                    if (m_axis.tready & !m_axis.tvalid) begin
+                        
+                        m_axis.tvalid <= 1;
+                        m_axis.tlast <= 1;
+
+                    end
                     
                     m_axis.tdata <= o_crc_res_dat;
                     
-                    m_axis.tvalid <= 0;
-                    
-                    q_crnt_s <= S6;
-  
-                end
-                S6: begin
-                
-                   if (q_cnt <= IDLE_PAUSE)
-                       q_cnt <= q_cnt + 1;
-                   else
-                       q_crnt_s <= S0;
+                    if (m_axis.tvalid & m_axis.tready) begin
                        
+                        m_axis.tvalid <= 0;
+                        q_cnt <= 0;    
+                        q_crnt_s <= S6;
+                    
+                    end          
+                    
                 end
+                S6: begin   // idle pause
+                
+                    if (q_cnt <= IDLE_PAUSE)
+                        q_cnt <= q_cnt + 1;
+                    else
+                        q_crnt_s <= S0;
+                
+                end
+
                 default: q_crnt_s <= S0;
                 
             endcase

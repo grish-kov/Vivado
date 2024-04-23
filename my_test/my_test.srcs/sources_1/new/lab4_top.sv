@@ -3,8 +3,8 @@ interface if_axis #(parameter int N = 1) ();
 	
 	logic         tready;
 	logic         tvalid;
-	logic         tlast ;
-	logic [W-1:0] tdata ;
+	logic         tlast;
+	logic [W-1:0] tdata;
 	
 	modport m (input tready, output tvalid, tlast, tdata);
 	modport s (output tready, input tvalid, tlast, tdata);
