@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 module lab4_source #(
-    parameter   N           = 10,
+    parameter   N           = 8,
     parameter   G_BYT       = 1,
     parameter   CRC_PAUSE   = 10,
     parameter   IDLE_PAUSE  = 10,
