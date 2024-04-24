@@ -15,7 +15,8 @@ module lab4_top #(
     parameter G_BYT = 1
 ) (
     input wire          i_clk,
-    input wire [2:0]    i_rst
+    input wire [2:0]    i_rst,
+    output wire         o_err
 );  
 
     if_axis mst_fifo();
@@ -51,6 +52,7 @@ module lab4_top #(
     lab4_sink u_sink (
         .i_clk              (i_clk),   
         .i_rst              (i_rst[2]),
+        .o_err              (o_err),
         .s_axis             (slv_fifo)
         );
    

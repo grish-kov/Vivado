@@ -15,7 +15,7 @@ module lab4_source #(
     logic [7:0] o_crc_res_dat = '0;
     logic [7:0] i_crc_wrd_dat = '0;
     logic       q_vld = '0;
-    logic       m_crc_rst;
+    logic       m_crc_rst = '0;
 
 
     CRC #(
@@ -55,7 +55,6 @@ module lab4_source #(
     
     initial begin
         m_axis.tvalid <= '0;
-        m_axis.tready  <= '1;
         m_axis.tlast   <= '0;
         m_axis.tdata   <= '0;
     end
@@ -69,16 +68,17 @@ module lab4_source #(
             q_crnt_s <= S0;
             q_cnt <= 0;
             m_axis.tvalid <= '0;
-            m_axis.tready <= '1;
             m_axis.tlast  <= '0;
             m_axis.tdata  <= '0;
+            m_crc_rst <= 1;
 
         end else 
             case (q_crnt_s)
                 S0: begin   // init state
                     
                     if(m_axis.tready) begin
-
+                        
+                        m_crc_rst <= 0;
                         m_axis.tvalid <= 0;
                         m_axis.tlast <= 0; 
                         q_crnt_s <= S1;

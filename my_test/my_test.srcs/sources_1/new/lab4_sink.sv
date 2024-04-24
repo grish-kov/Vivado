@@ -87,38 +87,29 @@ module lab4_sink #(
 
                 end
                 S1: begin
-                    
-                    if (!(s_axis.tvalid & s_axis.tready))
-                        q_cnt_vld = q_cnt_vld + 1; 
 
-                    if (q_cnt_vld == 2 & q_cnt == 4)
-                        q_vld <= 1;
-                    else if (q_cnt_vld > 2) begin
-                        
-                        q_cnt_vld = 0;
-                        q_vld <= 0;
-
-                    end
-
-                    if ((q_cnt < N + 4) & !s_axis.tlast) begin
-                        
-                        i_crc_wrd_dat <= s_axis.tdata;
+                    if (q_cnt < N + 3)
                         q_cnt <= q_cnt + 1;
 
-                    end 
-                    else if ((q_cnt == N + 4)) begin
+                    if (~s_axis.tlast & q_cnt >=2 & q_cnt < N + 1 & s_axis.tvalid)
+                        q_vld <= 1;
+                    else if (s_axis.tlast & !s_axis.tvalid) begin
                         
+                        q_vld <= 0;
                         q_cnt <= 0;
                         q_crnt_s <= S2;
 
                     end
+                        
+
+                   
 
                 end
                 S2: begin
 
                     if (s_axis.tlast) begin
                         
-                        q_vld <= 0;
+                        // q_vld <= 0;
                         q_tdata_last <= s_axis.tdata;
                         q_crnt_s <= S3;
 
