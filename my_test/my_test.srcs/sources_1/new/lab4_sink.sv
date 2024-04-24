@@ -9,7 +9,6 @@ module lab4_sink #(
     output      o_err,
     if_axis.s   s_axis
 );
-        logic       m_vld = 0;
         logic [1:0] q_cnt_vld = '0;
         logic [7:0] o_crc_res_dat = '0;
         logic [7:0] i_crc_wrd_dat = '0;
@@ -23,10 +22,10 @@ module lab4_sink #(
 
         enum logic [3:0]{
 
-        S0 /*  READY     */ = 4'b0001,
-        S1 /*  PAYLOAD   */ = 4'b0010,
-        S2 /*  CRC_PAUSE */ = 4'b0100,
-        S3 /*  CRC       */ = 4'b1000
+            S0 = 4'b0001,
+            S1 = 4'b0010,
+            S2 = 4'b0100,
+            S3 = 4'b1000
         
         } q_crnt_s;
 
@@ -63,6 +62,11 @@ module lab4_sink #(
         
         s_axis.tready <= '1;
         
+        if (q_tdata_last == q_tdata) 
+            q_err <= 0;
+        else 
+            q_err <= 1;
+
         if (i_rst) begin
 
             q_crnt_s <= S0;
@@ -74,14 +78,15 @@ module lab4_sink #(
         end else 
             case (q_crnt_s)
             
-                S0: begin   // init state
+                S0: begin
                     
                     q_cnt <= 0;
                     q_cnt_vld = 0;
-                    q_crnt_s <= S1;
+                    m_crc_rst <= 0;
+                    q_crnt_s <= S1; 
 
                 end
-                S1: begin   // read payload
+                S1: begin
                     
                     if (!(s_axis.tvalid & s_axis.tready))
                         q_cnt_vld = q_cnt_vld + 1; 
@@ -89,47 +94,48 @@ module lab4_sink #(
                     if (q_cnt_vld == 2 & q_cnt == 4)
                         q_vld <= 1;
                     else if (q_cnt_vld > 2) begin
+                        
                         q_cnt_vld = 0;
                         q_vld <= 0;
+
                     end
 
                     if ((q_cnt < N + 4) & !s_axis.tlast) begin
+                        
                         i_crc_wrd_dat <= s_axis.tdata;
                         q_cnt <= q_cnt + 1;
 
                     end 
-                    else
+                    else if ((q_cnt == N + 4)) begin
+                        
+                        q_cnt <= 0;
                         q_crnt_s <= S2;
 
+                    end
+
                 end
-                S2: begin   // crc
+                S2: begin
 
                     if (s_axis.tlast) begin
                         
                         q_vld <= 0;
-                        m_crc_rst <= 1;
                         q_tdata_last <= s_axis.tdata;
                         q_crnt_s <= S3;
-                    
+
                     end
-
+                    
                 end
-                S3: begin   // compare crc
+                S3: begin
 
+                        m_crc_rst <= 1;
                         q_tdata <= o_crc_res_dat;
-                        m_crc_rst <= 0;
                         q_crnt_s <= S0;
-
+                        
                 end
             
                 default: q_crnt_s <= S0;
 
             endcase
-        
-        if (q_tdata_last == q_tdata) 
-            q_err <= 0;
-        else 
-            q_err <= 1;
         
     end
     
