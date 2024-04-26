@@ -16,7 +16,7 @@ module lab4_source #(
     logic [7:0] i_crc_wrd_dat = '0;
     logic       q_vld = '0;
     logic       m_crc_rst = '0;
-
+    reg [int'($ceil($clog2(N + 1))):0] q_cnt;
 
     CRC #(
 		.POLY_WIDTH (W),          // Size of The Polynomial Vector
@@ -59,14 +59,13 @@ module lab4_source #(
         m_axis.tdata   <= '0;
     end
     
-    reg [int'($ceil($clog2(N + 1))):0] q_cnt;
-    
     always_ff @(posedge i_clk) begin
     
         if (i_rst) begin
 
             q_crnt_s <= S0;
             q_cnt <= 0;
+            q_vld <= 0;
             m_axis.tvalid <= '0;
             m_axis.tlast  <= '0;
             m_axis.tdata  <= '0;
@@ -80,7 +79,8 @@ module lab4_source #(
                         
                         m_crc_rst <= 0;
                         m_axis.tvalid <= 0;
-                        m_axis.tlast <= 0; 
+                        m_axis.tlast <= 0;
+                        q_vld <= 0; 
                         q_crnt_s <= S1;
 
                     end
