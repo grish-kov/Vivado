@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 module lab4_source #(
-    parameter   N           = 8,
+    parameter   N           = 10,
     parameter   G_BYT       = 1,
     parameter   CRC_PAUSE   = 10,
     parameter   IDLE_PAUSE  = 10,
@@ -12,11 +12,14 @@ module lab4_source #(
     if_axis.m m_axis
 );
 
-    logic [7:0] o_crc_res_dat = '0;
-    logic [7:0] i_crc_wrd_dat = '0;
-    logic       q_vld = '0;
-    logic       m_crc_rst = '0;
-    reg [int'($ceil($clog2(N + 1))):0] q_cnt;
+    logic [7:0] o_crc_res_dat   = '0;
+    logic [7:0] i_crc_wrd_dat   = '0;
+
+    logic       q_vld           = '0;
+    logic       m_crc_rst       = '0;
+    logic       q_cdata         = '0;
+
+    reg [int'($ceil($clog2(N + 2))):0] q_cnt;
 
     CRC #(
 		.POLY_WIDTH (W),          // Size of The Polynomial Vector
@@ -52,7 +55,7 @@ module lab4_source #(
         S6 /*  IDLE      */ = 8'b1000000
         
     } q_crnt_s;
-    
+
     initial begin
         m_axis.tvalid <= '0;
         m_axis.tlast   <= '0;
@@ -81,6 +84,7 @@ module lab4_source #(
                         m_axis.tvalid <= 0;
                         m_axis.tlast <= 0;
                         q_vld <= 0; 
+                        q_cdata <= 0;
                         q_crnt_s <= S1;
 
                     end
@@ -88,17 +92,35 @@ module lab4_source #(
                 end
                 S1: begin   // send header
                     
-                    if (m_axis.tready & !m_axis.tvalid)
-                        m_axis.tvalid <= 1;                         
+                    if (m_axis.tready & !m_axis.tvalid) begin
 
-                    m_axis.tdata <= 72;
+                        m_axis.tvalid <= 1;
+                        q_cdata <= q_cdata + 1;
+
+                    end                         
+
+                    case (q_cdata) 
+                    
+                        0: begin
+                            
+                            m_axis.tdata <= 72;
+                        
+                        end
+
+                        1:  begin 
+
+                            m_axis.tdata <= N;
+                        
+                        end
+                        default : m_axis.tdata <= q_cdata;
+                    endcase
 
                     m_crc_rst <= 1;
 
                     if (m_axis.tready & m_axis.tvalid) begin
                         
                         m_crc_rst <= 0;
-                        m_axis.tvalid <= 0; 
+//                        m_axis.tvalid <= 0; 
                         q_crnt_s <= S2;
                         
                     end
@@ -109,11 +131,11 @@ module lab4_source #(
                     if (m_axis.tready & !m_axis.tvalid)
                         m_axis.tvalid <= 1;
 
-                    m_axis.tdata <= N;
+                   
 
                      if (m_axis.tready & m_axis.tvalid) begin
                         
-                        m_axis.tvalid <= 0;
+//                        m_axis.tvalid <= 0;
                         q_cnt <= 0;
                         q_crnt_s <= S3;
                         
@@ -129,7 +151,7 @@ module lab4_source #(
 
                     end
 
-                    if (m_axis.tready & q_cnt < N) begin
+                    if (m_axis.tready & q_cnt < N + 2) begin
 
                         m_axis.tdata  <= q_cnt;
                         i_crc_wrd_dat <= q_cnt;
