@@ -19,7 +19,7 @@ module lab4_source #(
     logic       m_crc_rst       = '0;
     logic       q_tmp           = '0;
 
-    reg [int'($ceil($clog2(N + 2))):0] q_shr [0:2]  = '{0,0,0};
+    reg [int'($ceil($clog2(N + 2))):0] q_shr [0:1]  = '{0,0};
     reg [int'($ceil($clog2(N + 2))):0] q_cnt        = '0;
     reg [int'($ceil($clog2(N + 2))):0] q_shr_cnt    = '0;
 
@@ -72,9 +72,9 @@ module lab4_source #(
 
             q_crnt_s <= S0;
             q_cnt <= 0;
-            q_shr_cnt <= 3;
+            q_shr_cnt <= 2;
             q_vld <= 0;
-            q_shr <= '{0, 1, 2}; 
+            q_shr <= '{0, 1}; 
             m_axis.tvalid <= '0;
             m_axis.tlast  <= '0;
             m_axis.tdata  <= '0;
@@ -87,6 +87,7 @@ module lab4_source #(
                     if(m_axis.tready) begin
                         
                         m_crc_rst <= 0;
+                        // q_cnt <= 0;
                         m_axis.tvalid <= 0;
                         m_axis.tlast <= 0;
                         q_vld <= 0; 
@@ -112,15 +113,20 @@ module lab4_source #(
 
                     endcase
 
+                    q_cnt <= q_cnt + 1;
+
+                    q_shr_cnt <= q_shr_cnt + 1;
+
                     if (q_shr_cnt == N + 2)
                         q_shr_cnt <= 0;
+
+                    q_shr[0] <= q_shr[1];
+                    q_shr[1] <= q_shr_cnt; 
+
+                    if (m_axis.tready & m_axis.tvalid & q_cnt == N + 2) begin
                         
-                    if (m_axis.tready & m_axis.tvalid) begin
-                        
-                        q_shr[0] <= q_shr[1];
-                        q_shr[1] <= q_shr[2];
-                        q_shr[2] <= q_shr_cnt;
-                        q_shr_cnt <= q_shr_cnt + 1;
+                        q_shr_cnt <= 0;
+                        q_cnt <= 0;
                         q_crnt_s <= S0;
                         
                     end
