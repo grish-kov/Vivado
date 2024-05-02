@@ -12,9 +12,9 @@ module lab4_source #(
     if_axis.m   m_axis
 );
 
-    logic [7:0] o_crc_res_dat   = '0;
+    logic [7:0] o_crc_res       = '0;
     logic [7:0] i_crc_wrd_dat   = '0;
-
+    
     logic       q_vld           = '0;
     logic       m_crc_rst       = '0;
 
@@ -141,7 +141,7 @@ module lab4_source #(
 		.o_crc_wrd_rdy (),                // Ready To Recieve Word Data
 		.i_crc_wrd_dat (m_axis.tdata),   // Word Data
 		.o_crc_res_vld (),                // Output Flag of Validity, Active High for Each WORD_COUNT Number
-		.o_crc_res_dat (o_crc_res_dat)    // Output CRC from Each Input Word
+		.o_crc_res_dat (o_crc_res)    // Output CRC from Each Input Word
 	);
 
 endmodule
