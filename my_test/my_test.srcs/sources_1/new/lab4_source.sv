@@ -13,7 +13,7 @@ module lab4_source #(
 );
 
     logic [7:0] o_crc_res       = '0;
-    logic [7:0] i_crc_wrd_dat   = '0;
+    logic [7:0] i_crc_wrd       = '0;
     
     logic       q_vld           = '0;
     logic       m_crc_rst       = '0;
@@ -49,7 +49,7 @@ module lab4_source #(
         end else
         case (q_crnt_s) 
 
-            S0: begin
+            S0 : begin
                 
                 m_axis.tvalid   <= 0;
                 m_axis.tlast    <= 0;
@@ -60,7 +60,7 @@ module lab4_source #(
 
             end
 
-            S1: begin
+            S1 : begin
                 
                 if (!m_axis.tvalid) begin
 
@@ -83,30 +83,29 @@ module lab4_source #(
                 end
                 case (q_cnt)
 
-                    1: begin
+                    1 : begin
 
                         m_axis.tdata <= 72;
                         q_cnt <= q_cnt + 1;
 
                     end 
 
-                    2: begin
+                    2 : begin
 
                         m_axis.tdata <= N;
                         q_cnt <= q_cnt + 1;
 
                     end
 
-                    N + 3: 
+                    N + 3 : 
 
-                        m_axis.tdata <= o_crc_res_dat;
+                        m_axis.tdata <= o_crc_res   ;
 
-                    
-
-                    default: begin 
+                    default : begin 
                         
                         q_vld <= 1;
-                        m_axis.tdata <= q_shr[0];     
+                        i_crc_wrd <= q_shr[0];  
+                        m_axis.tdata <= q_shr[0];   
                         
                     end
 
@@ -139,7 +138,7 @@ module lab4_source #(
 		.i_crc_ini_dat ('0),              // Input Initial Value
 		.i_crc_wrd_vld (q_vld),       // Word Data Valid Flag 
 		.o_crc_wrd_rdy (),                // Ready To Recieve Word Data
-		.i_crc_wrd_dat (m_axis.tdata),   // Word Data
+		.i_crc_wrd_dat (i_crc_wrd),   // Word Data
 		.o_crc_res_vld (),                // Output Flag of Validity, Active High for Each WORD_COUNT Number
 		.o_crc_res_dat (o_crc_res)    // Output CRC from Each Input Word
 	);

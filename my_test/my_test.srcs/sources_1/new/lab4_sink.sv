@@ -106,7 +106,8 @@ module lab4_sink #(
 
                     end
 
-                    q_crc_c <= o_crc_res_dat;
+                    if (s_axis.tlast)
+                        q_crc_c <= o_crc_res_dat;
 
                 end
             
@@ -125,7 +126,7 @@ module lab4_sink #(
 		.POLYNOMIAL ('hD5),                 // Polynomial Bit Vector
 		.INIT_VALUE ('h01),                 // Initial Value
 		.XOR_VECTOR ('0),                   // CRC Final Xor Vector
-		.NUM_STAGES (2)                     // Number of Register Stages, Equivalent Latency in Module. Minimum is 1, Maximum is 3.
+		.NUM_STAGES (1)                     // Number of Register Stages, Equivalent Latency in Module. Minimum is 1, Maximum is 3.
 	) u_crc1 (
 		.i_crc_a_clk_p (i_clk),             // Rising Edge Clock
 		.i_crc_s_rst_p (m_crc_rst),         // Sync Reset, Active High. Reset CRC To Initial Value.
