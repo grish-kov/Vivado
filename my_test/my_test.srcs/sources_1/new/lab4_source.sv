@@ -99,7 +99,7 @@ module lab4_source #(
 
                     N + 3 : 
 
-                        m_axis.tdata <= o_crc_res   ;
+                        m_axis.tdata <= o_crc_res;
 
                     default : begin 
                         

@@ -26,15 +26,17 @@ module lab4_sink #(
 
     enum logic [3:0]{
 
-        S0 = 4'b0001,
-        S1 = 4'b0010,
-        S2 = 4'b0100,
-        S3 = 4'b1000
+        S0 ,//= 4'b0001,
+        S1 ,//= 4'b0010,
+        S2 ,//= 4'b0100,
+        S3//= 4'b1000
     
-    } q_crnt_s;
+    } q_crnt_s = S1;
 
+   
+    
     initial begin
-        
+
         s_axis.tvalid <= '1;
         s_axis.tready <= '1;
     
@@ -53,20 +55,22 @@ module lab4_sink #(
         if (s_axis.tlast & !s_axis.tvalid)
             q_crc_c <= o_crc_res_dat;
             
-        if (i_rst) begin
+        // if (i_rst) begin
 
-            q_crnt_s <= S0;
-            q_cnt <= 0;
+        //     q_vld <= 0;
+        //     q_cnt <= 0;
+        //     q_crnt_s <= S0;
         
-        end else 
+        // end 
+        // else 
             case (q_crnt_s)
             
                 S0: begin
 
-                    q_cnt <= 0;
-                    q_len <= 0;
-                    m_crc_rst <= 0;
-                    q_crnt_s <= S1; 
+                    q_cnt       <= 0;
+                    q_len       <= 0;
+                    m_crc_rst   <= 0;
+                    q_crnt_s    <= S1; 
 
                 end
 
@@ -74,8 +78,8 @@ module lab4_sink #(
 
                     if (s_axis.tdata == 72) begin
 
-                        m_crc_rst <= 1;
-                        q_crnt_s <= S2;
+                        m_crc_rst   <= 1;
+                        q_crnt_s    <= S2;
 
                     end
 
@@ -94,7 +98,7 @@ module lab4_sink #(
 
                 S3: begin
 
-                    if (q_cnt < q_len - 1) begin
+                    if (q_cnt < q_len - 2) begin
 
                         q_cnt <= q_cnt + 1;         
 

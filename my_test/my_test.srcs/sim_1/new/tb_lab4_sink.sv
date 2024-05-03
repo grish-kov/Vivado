@@ -14,26 +14,65 @@ interface if_axis #(parameter int N = 1) ();
 endinterface
 
 module tb_lab4_sink #(
-    parameter C_T_CLK   = 1.0,
-    parameter N         = 8,
-    int       B         = 1, 
-    int       W         = 8 * B
+    parameter T_CLK   = 1.0
 ) ();
 
-    logic           i_clk   = 1;
-    logic [2:0]     i_rst   = 3'b000;
-    logic           s_valid = '0;
+    logic i_clk='1; reg [0:1] i_rst='0;
 
-    logic           m_valid = '0;
-    logic [W-1:0]   m_data  = '0;
-    
+    int tst_crc_arr[18] = {'h01, 'hd5, 'hde, 'hf7, 'h7a, 'hc3, 'hf3, 'haf, 'h62, 'h6f, 'hb8, 'h83, 'h47, 'h61, 'h91, 'h3A, 'h27, 'hdd};
+
     if_axis m_axis ();
 
-    lab4_sink #(
-        .N(N),
-        .B(B),
-        .W(W)
-    ) 
+task send_packet;
+
+    input int       i_len;
+    input reg [3:0] i_set;
+    
+    begin
+
+        m_axis.tvalid <= 1;
+        
+        if (i_set[0]) begin
+            
+            m_axis.tdata <= 72; //send header
+            #(T_CLK);
+
+        end
+        
+        if (i_set[1]) begin
+
+            m_axis.tdata <= i_len; //send length
+            #(T_CLK);
+
+        end
+        
+        for (int i = 0; i < i_len; i ++) begin //send packet
+
+            m_axis.tvalid <= 1;
+			m_axis.tdata  <= i;
+			#(T_CLK);
+        
+        end
+        m_axis.tlast <= 1;
+
+        if (i_set[2]) 
+            m_axis.tdata<=tst_crc_arr[i_len - 1]; //send real precalculated CRC
+        else 
+            m_axis.tdata<=tst_crc_arr[i_len]; //send fake CRC
+        
+        #(T_CLK);
+        
+        m_axis.tlast <= 0;
+        m_axis.tvalid <= 0; //end packet
+
+        if (i_set[3]) 
+            #(T_CLK);
+
+    end
+
+endtask
+
+    lab4_sink
     UUT (
         .s_axis     (m_axis),
         .i_clk      (i_clk),
@@ -41,44 +80,37 @@ module tb_lab4_sink #(
         .o_err      (o_err)
     );
     
-    task send_pkt;
-        localparam [W-1:0] C_DATA_ARR [0:7] = '{1, 1, 2, 3, 4, 5, 6, 7};
-        begin
 
-            m_axis.tdata <= 72;
-            #(2 * C_T_CLK);
-            m_axis.tdata <= N;
-            #(2 * C_T_CLK);
-            for (int i = 0; i < $size(C_DATA_ARR); i++) begin
-                m_axis.tvalid <= '1;
-                m_axis.tdata  <= C_DATA_ARR[i];
-                #(2 * C_T_CLK);
-                m_axis.tvalid <= '0;
-            end
+    initial begin
 
-            #(C_T_CLK);
+        // i_rst = '1;
+        // #2;
+        // i_rst = '0;
+        m_axis.tlast <= '0;
 
-            m_axis.tlast <= 1;
-            #(245 * C_T_CLK);
-            m_axis.tdata <= 62;
-            m_axis.tlast <= 0;
-        end
-    endtask
+        send_packet(10, 4'b1111);   //good
+        send_packet(12, 4'b0111);   //good
+        send_packet(8,  4'b1111);   //good
+        send_packet(10, 4'b1111);   //bad
+        send_packet(10, 4'b1101);   //bad
+    
+        send_packet(4, 4'b0111);    //good
+        send_packet(6, 4'b0111);    //good
+    
+        send_packet(10, 4'b1011);   //bad
+        send_packet(10, 4'b1001);   //bad
+        send_packet(8,  4'b1001);   //bad
+        send_packet(10, 4'b0111);   //good
+        send_packet(10, 4'b1111);   //good
+        
+        #500;
+        i_rst = '1;
+        #590;
+        i_rst = '0;
+        
+        send_packet(10,3'b111);
+        m_axis.tvalid <= '0;
 
-    always #(C_T_CLK / 2) i_clk = ~i_clk;
-
-    always #(C_T_CLK * 244) begin
-
-        s_valid = ~s_valid;
-        send_pkt();
-
-    end 
-
-    initial begin   
-
-        i_rst = 3'b101;
-        #10 i_rst = 3'b010;
 
     end
-
 endmodule
