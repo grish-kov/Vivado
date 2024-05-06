@@ -28,7 +28,7 @@ module tb_lab4_sink #(
 
     if_axis m_axis ();
 
-    reg [5:0] j = 1;
+    reg [3:0] j = 1;
 
 task send_packet;
 
@@ -39,7 +39,7 @@ task send_packet;
 
         m_axis.tvalid <= 1;
         
-        if (i_set[0] == 1) begin
+        if (i_set[0]) begin
             
             m_axis.tdata <= 72;
             #(T_CLK);
@@ -84,7 +84,9 @@ task send_packet;
 
 endtask
 
-    lab4_sink UUT (
+    lab4_sink #(
+        .N(N)
+    ) UUT (
 
         .s_axis     (m_axis),
         .i_clk      (i_clk),
@@ -93,6 +95,8 @@ endtask
     
     );
 
+    always #(T_CLK / 2) i_clk = ~i_clk;
+    
     initial begin
 
         m_axis.tvalid   <=  0;
@@ -100,7 +104,7 @@ endtask
         m_axis.tlast    <=  0;
 
             i_rst <= 1;
-        #5  i_rst <= 0;
+        #2  i_rst <= 0;
         
         send_packet(10, 4'b1111);   //good  1
         j = j + 1;

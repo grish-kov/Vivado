@@ -27,7 +27,7 @@ module lab4_sink #(
     enum logic [1:0]{
 
         S0 = 2'b00,
-        S1 = 2'b01,
+        // S1 = 2'b01,
         S2 = 2'b10,
         S3 = 2'b11
     
@@ -43,7 +43,7 @@ module lab4_sink #(
      always_ff @(posedge i_clk) begin
 
 
-        if (s_axis.tlast & !s_axis.tvalid) begin
+        if (s_axis.tlast) begin
 
             q_crc_r <= s_axis.tdata;
             q_crc_c <= o_crc_res;
@@ -65,26 +65,23 @@ module lab4_sink #(
                 S0: begin
 
                     q_cnt       <= 0;
-                    q_len       <= 0;
-                    m_crc_rst   <= 0;
-                    q_crnt_s    <= S1; 
+                    m_crc_rst   <= 1;
+                    if (s_axis.tdata == 72)
+                        q_crnt_s    <= S2; 
 
                 end
 
-                S1: begin
+                // S1: begin
 
-                    if (s_axis.tdata == 72) begin
+                //         m_crc_rst   <= 1;
+                //         q_crnt_s    <= S2;
 
-                        m_crc_rst   <= 1;
-                        q_crnt_s    <= S2;
 
-                    end
-
-                end
+                // end
 
                 S2: begin
 
-                    if (!s_axis.tlast & s_axis.tvalid)
+                    // if (!s_axis.tlast & s_axis.tvalid)
                         q_len <= s_axis.tdata;
 
                     q_vld       <= 1;
@@ -101,7 +98,8 @@ module lab4_sink #(
                         q_cnt       <= q_cnt + 1;         
 
                     end          
-                    else begin
+
+                    if (q_cnt == q_len - 1) begin
                         
                         i_crc_wrd   <= 0;
                         q_vld       <= 0;
@@ -109,8 +107,10 @@ module lab4_sink #(
 
                     end
 
-                    if (s_axis.tlast)
-                        q_crc_c <= o_crc_res;
+                    if (!q_len)
+                        q_crnt_s <= S0; 
+                    // if (s_axis.tlast)
+                    //     q_crc_c <= o_crc_res;
 
                 end
             
