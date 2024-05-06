@@ -1,68 +1,65 @@
 `timescale 1ns / 1ps
 module lab4_sink #(
-    parameter   N = 8,
+    parameter   N,
     int         B = 1, 
     int         W = 8 * B
 )(
     input       i_clk, 
     input       i_rst,
+    input       i_rd,
     output      o_err,
     if_axis.s   s_axis
 );
 
-    logic [7:0] o_crc_res_dat   = '0;
-    logic [7:0] i_crc_wrd_dat   = '0;
+    logic [7:0] o_crc_res   = '0;
+    logic [7:0] i_crc_wrd   = '0;
 
-    logic [7:0] q_crc_r         = '0;   // received crc
-    logic [7:0] q_crc_c         = '0;   // calculated crc
+    logic [7:0] q_crc_r     = '0;   // received crc
+    logic [7:0] q_crc_c     = '0;   // calculated crc
 
-    logic       q_vld           = '0;
-    logic       m_crc_rst       = '0;
-    logic       q_err           = '0;
-
-
+    logic       q_vld       = 0;
+    logic       m_crc_rst   = 0;
+    logic       q_err       = 0;
+ 
     reg [int'($ceil($clog2(N))):0] q_cnt = 0;
     reg [int'($ceil($clog2(N))):0] q_len = 0;
 
-    enum logic [3:0]{
+    enum logic [1:0]{
 
-        S0 ,//= 4'b0001,
-        S1 ,//= 4'b0010,
-        S2 ,//= 4'b0100,
-        S3//= 4'b1000
+        S0 = 2'b00,
+        S1 = 2'b01,
+        S2 = 2'b10,
+        S3 = 2'b11
     
-    } q_crnt_s = S1;
-
-   
+    } q_crnt_s = S0;
     
     initial begin
 
-        s_axis.tvalid <= '1;
-        s_axis.tready <= '1;
+        s_axis.tvalid <= 1;
+        s_axis.tready <= 1;
     
     end
     
      always_ff @(posedge i_clk) begin
-        
-        if (q_crc_r == q_crc_c) 
-            q_err <= 0;
-        else 
-            q_err <= 1;
 
-        if (s_axis.tlast) 
+
+        if (s_axis.tlast & !s_axis.tvalid) begin
+
             q_crc_r <= s_axis.tdata;
+            q_crc_c <= o_crc_res;
 
-        if (s_axis.tlast & !s_axis.tvalid)
-            q_crc_c <= o_crc_res_dat;
-            
-        // if (i_rst) begin
+        end
 
-        //     q_vld <= 0;
-        //     q_cnt <= 0;
-        //     q_crnt_s <= S0;
+        q_err <= (q_crc_r == q_crc_c) ? 0 : 1;
+
+        if (i_rst) begin
+
+            q_vld       <= 0;
+            q_cnt       <= 0;
+            q_crnt_s    <= S0;
         
-        // end 
-        // else 
+        end 
+        else 
             case (q_crnt_s)
             
                 S0: begin
@@ -87,31 +84,33 @@ module lab4_sink #(
 
                 S2: begin
 
-                    if (!s_axis.tlast)
+                    if (!s_axis.tlast & s_axis.tvalid)
                         q_len <= s_axis.tdata;
 
-                    q_vld <= 1;
-                    m_crc_rst <= 0;
-                    q_crnt_s <= S3;
+                    q_vld       <= 1;
+                    m_crc_rst   <= 0;
+                    q_crnt_s    <= S3;
 
                 end
 
                 S3: begin
 
-                    if (q_cnt < q_len - 2) begin
-
-                        q_cnt <= q_cnt + 1;         
+                    if (q_cnt < q_len - 1) begin
+                        
+                        i_crc_wrd   <= q_cnt;
+                        q_cnt       <= q_cnt + 1;         
 
                     end          
                     else begin
-
-                        q_vld <= 0;
-                        q_crnt_s <= S0;
+                        
+                        i_crc_wrd   <= 0;
+                        q_vld       <= 0;
+                        q_crnt_s    <= S0;
 
                     end
 
                     if (s_axis.tlast)
-                        q_crc_c <= o_crc_res_dat;
+                        q_crc_c <= o_crc_res;
 
                 end
             
@@ -119,9 +118,14 @@ module lab4_sink #(
 
             endcase
         
+        if (i_rd == 0) begin
+
+            q_crc_c <= 0;
+            q_crc_r <= 0;
+            q_err   <= 0;
+
+        end
     end
-    
-    assign o_err = q_err;
 
     CRC #(
 		.POLY_WIDTH (W),                    // Size of The Polynomial Vector
@@ -140,7 +144,7 @@ module lab4_sink #(
 		.o_crc_wrd_rdy (),                  // Ready To Recieve Word Data
 		.i_crc_wrd_dat (s_axis.tdata),      // Word Data
 		.o_crc_res_vld (o_crc_res_vld),     // Output Flag of Validity, Active High for Each WORD_COUNT Number
-		.o_crc_res_dat (o_crc_res_dat)      // Output CRC from Each Input Word
+		.o_crc_res_dat (o_crc_res)          // Output CRC from Each Input Word
 	);
 
 endmodule
