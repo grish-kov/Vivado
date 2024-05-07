@@ -40,3 +40,5 @@ my_test/my_test.sim/*
 !/**/LaTeX/**/*.py
 !/**/LaTeX/**/*.tex
 /**/.idea
+my_test/my_test.tcl
+my_test.tcl
