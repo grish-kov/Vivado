@@ -1,17 +1,17 @@
 `timescale 1ns / 1ps
 
-interface if_axis #(parameter int N = 1) ();
-	localparam W = 8 * N;
+//interface if_axis #(parameter int N = 1) ();
+//	localparam W = 8 * N;
 	
-	logic         tready;
-	logic         tvalid;
-	logic         tlast;
-	logic [W-1:0] tdata;
+//	logic         tready;
+//	logic         tvalid;
+//	logic         tlast;
+//	logic [W-1:0] tdata;
 	
-	modport m (input tready, output tvalid, tlast, tdata);
-	modport s (output tready, input tvalid, tlast, tdata);
+//	modport m (input tready, output tvalid, tlast, tdata);
+//	modport s (output tready, input tvalid, tlast, tdata);
 	
-endinterface
+//endinterface
 
 module tb_lab4_sink #(
     parameter T_CLK = 1.0,

@@ -1,15 +1,88 @@
-interface if_axis #(parameter int N = 1) ();
-	localparam W = 8 * N;
-	
-	logic         tready;
-	logic         tvalid;
-	logic         tlast;
-	logic [W-1:0] tdata;
-	
-	modport m (input tready, output tvalid, tlast, tdata);
-	modport s (output tready, input tvalid, tlast, tdata);
-	
-endinterface
+`timescale 1ns / 1ps
+
+interface if_axis #( 
+    parameter   int N = 1, 
+                    I = 0, 
+                    D = 0, 
+                    U = 0, 
+                bit [0:3] PAYMASK = '1 ) 
+();
+
+   import axi::*;
+
+  localparam int C = N << 3;
+
+  typedef logic [C-1:0] t_data;
+  typedef logic [N-1:0] t_strb;
+  typedef logic [N-1:0] t_keep;
+  typedef logic [I-1:0] t_id;
+  typedef logic [D-1:0] t_dest;
+  typedef logic [U-1:0] t_user;
+
+  // Check Parameters
+  initial begin : check_param
+    if ( N < 1 || N > 256 )
+      $error("[%s %0d-%0d] TDATA bus width (%0d) in AXI4-Stream interface must be greater than or equal to 1 and less than or equal to 256. %m", "AXI", 1, 1, N);
+    if ( I < 0 || I > 32 )
+      $error("[%s %0d-%0d] TID bus width (%0d) in AXI4-Stream interface must be greater than or equal to 0 and less than or equal to 32. %m", "AXI", 1, 2, I);
+    if ( D < 0 || D > 32 )
+      $error("[%s %0d-%0d] TDEST bus width (%0d) in AXI4-Stream interface must be greater than or equal to 0 and less than or equal to 32. %m", "AXI", 1, 3, D);
+    if ( U < 0 || U > 4096 )
+      $error("[%s %0d-%0d] TUSER bus width (%0d) in AXI4-Stream interface must be greater than or equal to 0 and less than or equal to 4096. %m", "AXI", 1, 4, U);
+  end : check_param
+
+  // Signal List
+  logic   tvalid;
+  logic   tready;
+  t_data  tdata;
+  t_strb  tstrb;
+  t_keep  tkeep;
+  logic   tlast;
+  t_id    tid;
+  t_dest  tdest;
+  t_user  tuser;
+
+  // AXI4-Stream Payload
+  typedef struct packed { bit TDATA, TSTRB, TKEEP, TLAST, TID, TDEST, TUSER; } t_msk;
+
+  localparam t_msk MASK = { PAYMASK, I != 0, D != 0, U != 0 };
+  
+  localparam int PAYLOAD = C*MASK.TDATA + N*MASK.TSTRB + N*MASK.TKEEP + 1*MASK.TLAST + I + D + U;
+
+  localparam int TDATA_OFFSET = MASK.TDATA*C;
+  localparam int TSTRB_OFFSET = MASK.TSTRB*N + TDATA_OFFSET;
+  localparam int TKEEP_OFFSET = MASK.TKEEP*N + TSTRB_OFFSET;
+  localparam int TLAST_OFFSET = MASK.TLAST*1 + TKEEP_OFFSET;
+  localparam int TID_OFFSET = I + TLAST_OFFSET;
+  localparam int TDEST_OFFSET = D + TID_OFFSET;
+
+  function logic [PAYLOAD-1:0] payload();
+    if ( MASK.TDATA ) payload = tdata;
+    if ( MASK.TSTRB ) payload = tstrb << TDATA_OFFSET | payload;
+    if ( MASK.TKEEP ) payload = tkeep << TSTRB_OFFSET | payload;
+    if ( MASK.TLAST ) payload = tlast << TKEEP_OFFSET | payload;
+    if ( MASK.TID ) payload = tid << TLAST_OFFSET | payload;
+    if ( MASK.TDEST ) payload = tdest << TID_OFFSET | payload;
+    if ( MASK.TUSER ) payload = tuser << TDEST_OFFSET | payload;
+  endfunction : payload
+
+  function void paymask( input logic [PAYLOAD-1:0] axis_payload );
+    tdata = ( MASK.TDATA ) ? axis_payload : '0;
+    tkeep = ( MASK.TKEEP ) ? axis_payload >> TSTRB_OFFSET : '1;
+    tstrb = ( MASK.TSTRB ) ? axis_payload >> TDATA_OFFSET : tkeep;
+    tlast = ( MASK.TLAST ) ? axis_payload >> TKEEP_OFFSET : '0;
+    tid = ( MASK.TID ) ? axis_payload >> TLAST_OFFSET : '0;
+    tdest = ( MASK.TDEST ) ? axis_payload >> TID_OFFSET : '0;
+    tuser = ( MASK.TUSER ) ? axis_payload >> TDEST_OFFSET : '0;
+  endfunction : paymask
+
+  // Master Ports
+  modport m ( input tready, output tvalid, tdata, tstrb, tkeep, tlast, tid, tdest, tuser, import paymask );
+
+  // Slave Ports
+  modport s ( input tvalid, tdata, tstrb, tkeep, tlast, tid, tdest, tuser, output tready, import payload );
+
+endinterface : if_axis
 
 
 module lab4_top #(
@@ -21,8 +94,6 @@ module lab4_top #(
 );  
 
     parameter N = 10;
-
-    logic q_prg_empt; 
 
     if_axis mst_fifo();
     if_axis slv_fifo();
@@ -37,24 +108,26 @@ module lab4_top #(
         );
 
     (* keep_hierarchy="yes" *) 
-    axis_data_fifo_0 u_fifo (
-        .s_axis_aresetn     (i_rst[1]),
-        .s_axis_aclk        (i_clk),
+    axis_fifo #(
+        .PACKET_MODE            ("True"),
+        .DEPTH                  (16),
+        .FEATURES               (8'b01100111)
+    ) u_fifo (
+        .s_axis_a_clk_p         (i_clk),
+        .m_axis_a_clk_p         (i_clk),
+        .s_axis_a_rst_n         (i_rst[1]),
+        .m_axis_a_rst_n         (i_rst[1]),
+
+        .s_axis                 (mst_fifo),
+        .m_axis                 (slv_fifo),
+
+        .o_fifo_a_tfull         (o_fifo_a_tfull),
+        .o_fifo_p_tfull         (o_fifo_p_tfull),
+        .o_fifo_w_count         (o_fifo_w_count),
         
-        .s_axis_tvalid      (mst_fifo.tvalid),      // input wire s_axis_tvalid
-        .s_axis_tready      (mst_fifo.tready),      // output wire s_axis_tready
-        .s_axis_tdata       (mst_fifo.tdata),       // input wire [7 : 0] s_axis_tdata
-        .s_axis_tlast       (mst_fifo.tlast),       // input wire s_axis_tlast
-        
-        .m_axis_tvalid      (slv_fifo.tvalid),      // output wire m_axis_tvalid
-        .m_axis_tready      (slv_fifo.tready),      // input wire m_axis_tready
-        .m_axis_tdata       (slv_fifo.tdata),       // output wire [7 : 0] m_axis_tdata
-        .m_axis_tlast       (slv_fifo.tlast),       // output wire m_axis_tlast
-        
-        .axis_wr_data_count (axis_wr_data_count),
-        .axis_rd_data_count (axis_rd_data_count),
-        .prog_empty         (q_prg_empt),
-        .prog_full          (prog_full)
+        .o_fifo_a_empty         (o_fifo_a_empty),
+        .o_fifo_p_empty         (o_fifo_p_empty),
+        .o_fifo_r_count         (o_fifo_r_count)
         );
         
     (* keep_hierarchy="yes" *) 
@@ -63,8 +136,6 @@ module lab4_top #(
     ) u_sink (
         .i_clk              (i_clk),   
         .i_rst              (i_rst[2]),
-        .i_rd               (q_prg_empt),
-        .o_err              (o_err),
         .s_axis             (slv_fifo)
         );
    

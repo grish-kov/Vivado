@@ -67,7 +67,7 @@ module lab4_sink #(
                     q_cnt       <= 0;
                     m_crc_rst   <= 1;
                     if (s_axis.tdata == 72)
-                        q_crnt_s    <= S2; 
+                        q_crnt_s    <= S1; 
 
                 end
 
@@ -79,18 +79,18 @@ module lab4_sink #(
 
                 // end
 
-                S2: begin
+                S1: begin
 
                     // if (!s_axis.tlast & s_axis.tvalid)
-                        q_len <= s_axis.tdata;
+                    q_len <= s_axis.tdata;
 
                     q_vld       <= 1;
                     m_crc_rst   <= 0;
-                    q_crnt_s    <= S3;
+                    q_crnt_s    <= S2;
 
                 end
 
-                S3: begin
+                S2: begin
 
                     if (q_cnt < q_len - 1) begin
                         
@@ -109,8 +109,6 @@ module lab4_sink #(
 
                     if (!q_len)
                         q_crnt_s <= S0; 
-                    // if (s_axis.tlast)
-                    //     q_crc_c <= o_crc_res;
 
                 end
             
