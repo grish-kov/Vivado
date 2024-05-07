@@ -42,3 +42,4 @@ my_test/my_test.sim/*
 /**/.idea
 my_test/my_test.tcl
 my_test.tcl
+*.tcl
