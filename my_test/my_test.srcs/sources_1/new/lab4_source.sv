@@ -6,9 +6,9 @@ module lab4_source #(
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 ) (
-    input [G_CNT_WIDTH : 0] i_len,      // Input packet length
-                            i_clk,
-                            i_rst,      // Reset, active - high
+    input               i_clk,
+                        i_rst,      // Reset, active - high
+    [G_CNT_WIDTH : 0]   i_len,       // Input packet length
     
     if_axis.m   m_axis
 );
