@@ -86,32 +86,35 @@ endinterface : if_axis
 
 
 module lab4_top #(
-    parameter G_BYT = 1
+    parameter G_P_LEN     = 10, 
+              G_BYT       = 1,
+              G_BIT_WIDTH = 8 * G_BYT,
+              G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))
 ) (
     input   wire        i_clk,
-    input   wire [2:0]  i_rst,
-    output  wire        o_err
+    input   wire [2:0]  i_rst
 );  
 
-    parameter N = 10;
+    logic q_err;
 
-    if_axis mst_fifo();
-    if_axis slv_fifo();
+    if_axis #(.N(G_BYT)) mst_fifo();
+    if_axis #(.N(G_BYT)) slv_fifo();
 
     (* keep_hierarchy="yes" *)
     lab4_source #(
-        .N(N)
+        .G_P_LEN                (G_P_LEN)
     ) u_source (
-        .i_clk              (i_clk),
-        .i_rst              (i_rst[0]),
-        .m_axis             (mst_fifo)
+        .i_clk                  (i_clk),
+        .i_rst                  (i_rst[0]),
+        .m_axis                 (mst_fifo)
         );
 
     (* keep_hierarchy="yes" *) 
     axis_fifo #(
         .PACKET_MODE            ("True"),
-        .DEPTH                  (16),
-        .FEATURES               (8'b01100111)
+        .DEPTH                  (256),
+        .FEATURES               (8'b01100111),
+        .PROG_FULL              (32)
     ) u_fifo (
         .s_axis_a_clk_p         (i_clk),
         .m_axis_a_clk_p         (i_clk),
@@ -132,11 +135,11 @@ module lab4_top #(
         
     (* keep_hierarchy="yes" *) 
     lab4_sink #(
-        .N(N)
+        .G_P_LEN                (G_P_LEN)
     ) u_sink (
-        .i_clk              (i_clk),   
-        .i_rst              (i_rst[2]),
-        .s_axis             (slv_fifo)
+        .i_clk                  (i_clk),   
+        .i_rst                  (i_rst[2]),
+        .s_axis                 (slv_fifo)
         );
    
 endmodule
