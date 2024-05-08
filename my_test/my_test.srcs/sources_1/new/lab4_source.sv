@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 
 module lab4_source #(
-    parameter G_P_LEN     = 10,                             // Packet length  
-              G_BYT       = 1,                              // Amout of byte in data
-              G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
-              G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
+    parameter int   G_P_LEN     = 10,                             // Packet length  
+                    G_BYT       = 1,                              // Amout of byte in data
+                    G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
+                    G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 ) (
     input       i_clk,
                 i_rst,      // Reset, active - high
