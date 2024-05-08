@@ -1,36 +1,33 @@
 `timescale 1ns / 1ps
 module lab4_sink #(
-    parameter int   G_P_LEN     = 10, 
-                    G_BYT       = 1,
-                    G_BIT_WIDTH = 8 * G_BYT,
-                    G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))
+    parameter G_P_LEN     = 10,                             // Packet length  
+              G_BYT       = 1,                              // Amout of byte in data
+              G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
+              G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 )(
-    input       i_clk, 
-    input       i_rst,
-    output      o_err,
+    input       i_clk,
+                i_rst,      // Reset, active - high
+    output      o_err,      // Output error, when received CRC != calculated CRC - 1, else - 0
     if_axis.s   s_axis
 );
 
-    logic [G_BIT_WIDTH - 1 : 0] o_crc_res   = '0;
-    logic [G_BIT_WIDTH - 1 : 0] i_crc_wrd   = '0;
+    logic [G_BIT_WIDTH - 1 : 0] o_crc_res   = '0;       // Result of calculated CRC
+    logic [G_BIT_WIDTH - 1 : 0] i_crc_wrd   = '0;       // Input for CRC
 
-    logic [G_BIT_WIDTH - 1 : 0] q_crc_r     = '0;   // received crc
-    logic [G_BIT_WIDTH - 1 : 0] q_crc_c     = '0;   // calculated crc
+    logic [G_BIT_WIDTH - 1 : 0] q_crc_r     = '0;       // Received CRC
+    logic [G_BIT_WIDTH - 1 : 0] q_crc_c     = '0;       // Calculated CRC
 
-    reg [G_CNT_WIDTH : 0] q_cnt         = 0;
-    reg [G_CNT_WIDTH : 0] q_len         = 0;
+    reg   [G_CNT_WIDTH : 0]     q_cnt       = '0;       // Data counter
     
-    logic   q_vld       = 0;
-    logic   m_crc_rst   = 0;
-    logic   q_err       = 0;
+    logic   q_vld       = 0;                            // Validity of data for CRC
+    logic   m_crc_rst   = 0;                            // Reset for CRC, active - high
+    logic   q_err       = 0;                            // Logic error
  
-    
-
     enum logic [1:0]{
 
-        S0,
-        S1,
-        S2
+        S0,     // Init. state, find header
+        S1,     // Get packet length
+        S2      // Sending data to CRC
     
     } q_crnt_s = S0;
     
@@ -106,7 +103,7 @@ module lab4_sink #(
 
             endcase
 
-            q_err   <= (q_crc_r == q_crc_c) ? 0 : 1;
+            q_err <= (q_crc_r == q_crc_c) ? 0 : 1;
     end
 
     CRC #(

@@ -1,29 +1,29 @@
 `timescale 1ns / 1ps
 
 module lab4_source #(
-    parameter int   G_P_LEN     = 10, 
-                    G_BYT       = 1,
-                    G_BIT_WIDTH = 8 * G_BYT,
-                    G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))
+    parameter G_P_LEN     = 10,                             // Packet length  
+              G_BYT       = 1,                              // Amout of byte in data
+              G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
+              G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 ) (
-    input       i_clk, 
-    input       i_rst,
+    input       i_clk,
+                i_rst,      // Reset, active - high
     if_axis.m   m_axis
 );
 
-    logic   [G_BIT_WIDTH - 1 : 0] o_crc_res   = '0;
-    logic   [G_BIT_WIDTH - 1 : 0] i_crc_wrd   = '0;
+    logic   [G_BIT_WIDTH - 1 : 0] o_crc_res = '0;               // Result of calculated CRC
+    logic   [G_BIT_WIDTH - 1 : 0] i_crc_wrd = '0;               // Input for CRC
 
-    reg     [G_CNT_WIDTH : 0] q_cnt         = 0;
-    reg     [G_CNT_WIDTH : 0] q_shr [0:2]   = '{0, 0, 0};
+    reg     [G_CNT_WIDTH : 0] q_cnt         = 0;                // Data counter
+    reg     [G_CNT_WIDTH : 0] q_shr [0:2]   = '{0, 0, 0};       // Shift register
 
-    logic   q_vld       = 0;
-    logic   m_crc_rst   = 0;
+    logic   q_vld       = 0;                                    // Validity of data for CRC
+    logic   m_crc_rst   = 0;                                    // Reset for CRC, active - high
 
     enum logic {
 
-        S0 = 0,
-        S1 = 1
+        S0 = 0,     // Init. state
+        S1 = 1      // Payload to FIFO
         
     } q_crnt_s;
 
@@ -61,11 +61,8 @@ module lab4_source #(
 
             S1 : begin
                 
-                if (!m_axis.tvalid) begin
-
+                if (!m_axis.tvalid)
                     m_axis.tvalid <= 1;
-
-                end
 
                 if (m_axis.tvalid & m_axis.tready)
                     q_shr <= {q_shr [1:2], q_cnt};

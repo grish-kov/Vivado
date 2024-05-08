@@ -25,10 +25,10 @@ module tb_lab4_top #(
             #1 i_rst[2] = 0;
     end
 
-    // always #(C_T_CLK * 48)begin
+    always #(C_T_CLK * 48)begin
 
-    //         i_rst[0] = 1;
-    //         #1 i_rst[0] = 0;
-    // end
+            i_rst[0] = 1;
+            #1 i_rst[0] = 0;
+    end
 
 endmodule
