@@ -1,13 +1,12 @@
 `timescale 1ns / 1ps
 module lab4_sink #(
-    parameter int   G_P_LEN     = 10,                             // Packet length  
+    parameter int   G_P_LEN     = 8,                             // Packet length  
                     G_BYT       = 1,                              // Amout of byte in data
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 )(
     input       i_clk,
                 i_rst,      // Reset, active - high
-    output      o_err,      // Output error, when received CRC != calculated CRC - 1, else - 0
     if_axis.s   s_axis
 );
 
@@ -17,12 +16,12 @@ module lab4_sink #(
     logic [G_BIT_WIDTH - 1 : 0] q_crc_r     = '0;       // Received CRC
     logic [G_BIT_WIDTH - 1 : 0] q_crc_c     = '0;       // Calculated CRC
 
-    reg   [G_CNT_WIDTH : 0]     q_len       = '0;       // Received packet length
-    reg   [G_CNT_WIDTH : 0]     q_cnt       = '0;       // Data counter
+    reg   [7 : 0]               q_len       = '0;       // Received packet length
+    reg   [7 : 0]               q_cnt       = '0;       // Data counter
     
     logic   q_vld       = 0;                            // Validity of data for CRC
     logic   m_crc_rst   = 0;                            // Reset for CRC, active - high
-    logic   q_err       = 0;                            // Logic error
+    logic   q_err       = 0;                            // Logic error, when received CRC != calculated CRC - 1, else - 0
  
     enum logic [1:0]{
 
@@ -38,8 +37,6 @@ module lab4_sink #(
         s_axis.tready <= 1;
     
     end
-    
-    assign o_err = q_err;
 
     always_ff @(posedge i_clk) begin
 

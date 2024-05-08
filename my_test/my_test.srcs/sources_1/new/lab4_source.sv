@@ -6,13 +6,17 @@ module lab4_source #(
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 ) (
-    input       i_clk,
-                i_rst,      // Reset, active - high
+    input [G_CNT_WIDTH : 0] i_len,      // Input packet length
+                            i_clk,
+                            i_rst,      // Reset, active - high
+    
     if_axis.m   m_axis
 );
 
     logic   [G_BIT_WIDTH - 1 : 0] o_crc_res = '0;               // Result of calculated CRC
     logic   [G_BIT_WIDTH - 1 : 0] i_crc_wrd = '0;               // Input for CRC
+
+    logic   [G_CNT_WIDTH - 1 : 0] buf_len = '0;                 // Packet length buffer
 
     reg     [G_CNT_WIDTH : 0] q_cnt         = 0;                // Data counter
     reg     [G_CNT_WIDTH : 0] q_shr [0:2]   = '{0, 0, 0};       // Shift register
@@ -35,6 +39,9 @@ module lab4_source #(
     
     always_ff @(posedge i_clk) begin
     
+         if (i_len > 0) 
+            buf_len = i_len;
+
         if (i_rst) begin
 
             m_axis.tvalid   <= '0;
@@ -67,10 +74,10 @@ module lab4_source #(
                 if (m_axis.tvalid & m_axis.tready)
                     q_shr <= {q_shr [1:2], q_cnt};
 
-                if (q_cnt < G_P_LEN + 4) 
+                if (q_cnt < buf_len + 4) 
                     q_cnt <= q_cnt + 1;
                 
-                if (q_cnt == G_P_LEN + 4) begin
+                if (q_cnt == buf_len + 4) begin
                     
                     q_vld           <= 0;
                     m_axis.tlast    <= 1;
@@ -90,12 +97,12 @@ module lab4_source #(
 
                     2 : begin
 
-                        m_axis.tdata    <= G_P_LEN;
+                        m_axis.tdata    <= buf_len;
                         q_cnt           <= q_cnt + 1;
 
                     end
 
-                    G_P_LEN + 3: begin
+                    buf_len + 3: begin
 
                         q_vld           <= 0; 
                         m_axis.tvalid   <= 0;
@@ -103,7 +110,7 @@ module lab4_source #(
 
                     end
 
-                    G_P_LEN + 4 : begin 
+                    buf_len + 4 : begin 
 
                         m_axis.tvalid   <= 1;
                         m_axis.tdata    <= o_crc_res;
