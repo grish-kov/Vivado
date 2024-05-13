@@ -19,27 +19,119 @@ module lab4_source #(
     logic   [G_CNT_WIDTH - 1 : 0] buf_len = '0;                 // Packet length buffer
 
     reg     [G_CNT_WIDTH : 0] q_cnt         = 0;                // Data counter
-    reg     [G_CNT_WIDTH : 0] q_shr [0:2]   = '{0, 0, 0};       // Shift register
 
     logic   q_vld       = 0;                                    // Validity of data for CRC
     logic   m_crc_rst   = 0;                                    // Reset for CRC, active - high
 
-    enum logic {
+    typedef enum{
 
         S0 = 0,     // Init. state
         S1 = 1      // Payload to FIFO
         
-    } q_crnt_s;
+    } t_fsm_s;
+
+    t_fsm_s q_crnt_s = S0, w_nxt_s;
 
     initial begin
+
         m_axis.tvalid   <= 0;
         m_axis.tlast    <= 0;
         m_axis.tdata    <= 0;
+
     end
     
+    // FSM next state decode
+    always_comb begin
+
+        w_nxt_s <= q_crnt_s;
+        
+        if (i_len > 0) 
+            buf_len = i_len;
+
+        case(q_crnt_s)
+
+            S0 : begin
+                
+                m_axis.tvalid   <= 0;
+                m_axis.tlast    <= 0;
+                m_crc_rst       <= 1;
+                q_vld           <= 0;
+                w_nxt_s         <= S1;
+
+            end
+
+            S1 : begin
+                
+                if (!m_axis.tvalid) begin
+                    
+                    m_axis.tvalid   <= 1;
+                    m_crc_rst       <= 0;
+
+                end
+            
+                case (q_cnt)
+
+                    1 :
+                        m_axis.tdata    <= 72;
+  
+
+                    2 :
+                        m_axis.tdata    <= buf_len;
+
+                    buf_len + 3 : begin
+
+                        q_vld           <= 0;
+                        m_axis.tlast    <= 1;
+                        m_axis.tdata    <= o_crc_res;
+                        w_nxt_s         <= S0;
+
+                    end
+
+                    default : begin
+
+                        q_vld           <= 1;
+                        m_axis.tdata    <= q_cnt - 2;
+
+                    end
+
+                endcase
+
+            end
+            
+            default : w_nxt_s <= S0;
+
+        endcase
+
+    end
+
+    // FSM Counter
     always_ff @(posedge i_clk) begin
+
+        if (q_cnt < buf_len + 3) 
+            q_cnt <= q_cnt + 1;
+
+        if (q_cnt == buf_len + 3)
+            q_cnt <= 0; 
+
+    end
+
+    // FSM Current state sync
+    always_ff @(posedge i_clk)
+        
+        if (i_rst) begin
+        
+            m_axis.tdata    <= '0;
+            m_crc_rst       <=  1;
+            q_cnt           <=  0; 
+            q_crnt_s        <= S0;
+        
+        end
+        else
+            q_crnt_s <= w_nxt_s;
+ 
+    /*always_ff @(posedge i_clk) begin
     
-         if (i_len > 0) 
+        if (i_len > 0) 
             buf_len = i_len;
 
         if (i_rst) begin
@@ -59,7 +151,6 @@ module lab4_source #(
                 m_axis.tvalid   <= 0;
                 m_axis.tlast    <= 0;
                 m_crc_rst       <= 0;
-                q_cnt           <= 1;
                 q_vld           <= 0;
                 q_shr           <= '{0, 0, 1}; 
                 q_crnt_s        <= S1;
@@ -82,7 +173,8 @@ module lab4_source #(
                     q_vld           <= 0;
                     m_axis.tlast    <= 1;
                     m_crc_rst       <= 1;
-                    q_crnt_s        <= S0;
+                    q_cnt           <= 1;
+                    q_crnt_s        <= S0;  
 
                 end
 
@@ -134,6 +226,7 @@ module lab4_source #(
         endcase
 
     end
+    */
 
 
     CRC #(
@@ -154,7 +247,7 @@ module lab4_source #(
 		.i_crc_ini_dat      ('0),           // Input Initial Value
 		.i_crc_wrd_vld      (q_vld),        // Word Data Valid Flag 
 		.o_crc_wrd_rdy      (),             // Ready To Recieve Word Data
-		.i_crc_wrd_dat      (i_crc_wrd),    // Word Data
+		.i_crc_wrd_dat      (m_axis.tdata),    // Word Data
 		.o_crc_res_vld      (),             // Output Flag of Validity, Active High for Each WORD_COUNT Number
 		.o_crc_res_dat      (o_crc_res)     // Output CRC from Each Input Word
 	);
