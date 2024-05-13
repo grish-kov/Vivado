@@ -16,7 +16,7 @@ module lab4_source #(
     logic   [G_BIT_WIDTH - 1 : 0] o_crc_res = '0;               // Result of calculated CRC
     logic   [G_BIT_WIDTH - 1 : 0] i_crc_wrd = '0;               // Input for CRC
 
-    logic   [G_CNT_WIDTH - 1 : 0] buf_len = '0;                 // Packet length buffer
+    logic   [G_CNT_WIDTH : 0] buf_len       = '0;               // Packet length buffer
 
     reg     [G_CNT_WIDTH : 0] q_cnt         = 0;                // Data counter
 
@@ -40,28 +40,26 @@ module lab4_source #(
 
     end
     
-    // FSM next state decode
-    always_comb begin
+    always_ff @(posedge i_clk) begin
 
-        w_nxt_s = q_crnt_s;
-        
         if (i_len > 0) 
-            buf_len = i_len;
+            buf_len <= i_len;
+        else if (i_len === 'z)
+            buf_len <= '{(G_CNT_WIDTH - 2) : 1, default : 0};
 
-        case(q_crnt_s)
+        case(w_nxt_s)
+        
+            S0 : begin 
 
-            S0 : begin
-                
                 m_axis.tvalid   = 0;
                 m_axis.tlast    = 0;
                 m_crc_rst       = 1;
                 q_vld           = 0;
-                w_nxt_s         = S1;
 
             end
+            
+            S1 : begin 
 
-            S1 : begin
-                
                 if (!m_axis.tvalid) begin
                     
                     m_axis.tvalid   = 1;
@@ -71,19 +69,27 @@ module lab4_source #(
             
                 case (q_cnt)
 
+                    0: ;
+
                     1 :
                         m_axis.tdata    = 72;
   
 
                     2 :
                         m_axis.tdata    = buf_len;
-
+                    
                     buf_len + 3 : begin
-
+                        
                         q_vld           = 0;
+                        m_axis.tvalid   = 0;
+
+                    end
+
+                    buf_len + 4 : begin
+
+                        m_axis.tvalid   = 1;
                         m_axis.tlast    = 1;
                         m_axis.tdata    = o_crc_res;
-                        w_nxt_s         = S0;
 
                     end
 
@@ -97,25 +103,23 @@ module lab4_source #(
                 endcase
 
             end
-            
-            default : w_nxt_s = S0;
 
-        endcase
+            default : ;
+
+        endcase 
 
     end
 
-    // FSM Counter
     always_ff @(posedge i_clk) begin
 
-        if (q_cnt < buf_len + 3) 
+        if (q_cnt < buf_len + 4) 
             q_cnt <= q_cnt + 1;
 
-        if (q_cnt == buf_len + 3)
+        if (q_cnt == buf_len + 4)
             q_cnt <= 0; 
 
     end
 
-    // FSM Current state sync
     always_ff @(posedge i_clk)
         
         if (i_rst) begin
@@ -129,6 +133,22 @@ module lab4_source #(
         else
             q_crnt_s <= w_nxt_s;
  
+
+    always_comb begin
+
+        w_nxt_s = q_crnt_s; 
+
+        case (q_crnt_s)
+
+            S0: w_nxt_s = S1;
+
+            S1: if (m_axis.tlast) w_nxt_s = S0; 
+
+            default: w_nxt_s = S0;
+
+        endcase
+
+    end
     /*always_ff @(posedge i_clk) begin
     
         if (i_len > 0) 

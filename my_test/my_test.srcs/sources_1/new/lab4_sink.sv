@@ -26,10 +26,10 @@ module lab4_sink #(
     typedef enum{
 
         S0,     // Init. state, find header
-        S1,     // Get packet length
-        S2      // Sending data to CRC
+        S1     // Get packet length, write data to CRC
     
     } t_fsm_s;
+
     t_fsm_s q_crnt_s = S0, w_nxt_s;
     
     initial begin
@@ -38,69 +38,74 @@ module lab4_sink #(
         s_axis.tready <= 1;
     
     end
-    
     always_comb begin
+
+        w_nxt_s = q_crnt_s;
+
+        case(q_crnt_s)
+
+            S0 : w_nxt_s = (s_axis.tdata == 72 & s_axis.tvalid & s_axis.tready) ? S1 : S0;
+
+            S1 : w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast) ? S0 : S1;
+
+            default : w_nxt_s = S0;
+
+        endcase
+
+    end
+
+    always_ff @(posedge i_clk) begin
         
         case (q_crnt_s)
-            
+
             S0: begin
-
-                if (s_axis.tdata == 72 & s_axis.tvalid & s_axis.tready)
-                    w_nxt_s = S1;
-
-                m_crc_rst   = 1; 
-
-            end
-
-            S1: begin
 
                 if (s_axis.tvalid & s_axis.tready) begin 
 
-                    q_len           = s_axis.tdata;
-                    w_nxt_s         = S2;
-                    m_crc_rst       = 0;
+                    q_len       <= s_axis.tdata;
+                    m_crc_rst   <= 0;
 
                 end
             end
 
-            S2: begin
+            S1: begin
                 
                 if (s_axis.tvalid & s_axis.tready & !s_axis.tlast) begin
 
-                    i_crc_wrd   = s_axis.tdata; 
-                    q_vld       = 1;
+                    i_crc_wrd   <= s_axis.tdata; 
+                    q_vld       <= 1;
                 
                 end                    
 
                 if (s_axis.tvalid & s_axis.tready & s_axis.tlast) begin
 
-                    q_vld       = 0;
-                    w_nxt_s     = S0;
+                    q_vld       <= 0;
+                    m_crc_rst   <= 1; 
                 
                 end 
 
             end
         
-            default: w_nxt_s    = S0;
+            default : ;
 
         endcase
     
         if (s_axis.tlast) begin
 
-            q_crc_r = s_axis.tdata;     
-            q_crc_c = o_crc_res;
+            q_crc_r <= s_axis.tdata;     
+            q_crc_c <= o_crc_res;
 
-            q_err   = (q_crc_r == q_crc_c) ? 0 : 1;
+            q_err   <= (q_crc_r == q_crc_c) ? 0 : 1;
         end 
 
     end
 
-     always_ff @(posedge i_clk) begin
+    always_ff @(posedge i_clk) begin
     
-        if (q_cnt < q_len + 1 & q_crnt_s == S2)
+        if (q_cnt < q_len + 1 & q_crnt_s == S1)
             q_cnt <= q_cnt + 1;
 
-        if ((q_cnt == q_len + 1 | !q_len) & q_crnt_s == S2)                    
+        if ((q_cnt == q_len + 1 | !q_len) & q_crnt_s == S1)                    
             q_cnt <= 1;
     
     end
@@ -118,7 +123,7 @@ module lab4_sink #(
             q_crnt_s <= w_nxt_s;
     
     end
-    
+
     /*always_ff @(posedge i_clk) begin
 
         if (i_rst) begin
