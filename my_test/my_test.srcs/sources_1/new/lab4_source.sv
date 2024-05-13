@@ -43,7 +43,7 @@ module lab4_source #(
     // FSM next state decode
     always_comb begin
 
-        w_nxt_s <= q_crnt_s;
+        w_nxt_s = q_crnt_s;
         
         if (i_len > 0) 
             buf_len = i_len;
@@ -52,11 +52,11 @@ module lab4_source #(
 
             S0 : begin
                 
-                m_axis.tvalid   <= 0;
-                m_axis.tlast    <= 0;
-                m_crc_rst       <= 1;
-                q_vld           <= 0;
-                w_nxt_s         <= S1;
+                m_axis.tvalid   = 0;
+                m_axis.tlast    = 0;
+                m_crc_rst       = 1;
+                q_vld           = 0;
+                w_nxt_s         = S1;
 
             end
 
@@ -64,33 +64,33 @@ module lab4_source #(
                 
                 if (!m_axis.tvalid) begin
                     
-                    m_axis.tvalid   <= 1;
-                    m_crc_rst       <= 0;
+                    m_axis.tvalid   = 1;
+                    m_crc_rst       = 0;
 
                 end
             
                 case (q_cnt)
 
                     1 :
-                        m_axis.tdata    <= 72;
+                        m_axis.tdata    = 72;
   
 
                     2 :
-                        m_axis.tdata    <= buf_len;
+                        m_axis.tdata    = buf_len;
 
                     buf_len + 3 : begin
 
-                        q_vld           <= 0;
-                        m_axis.tlast    <= 1;
-                        m_axis.tdata    <= o_crc_res;
-                        w_nxt_s         <= S0;
+                        q_vld           = 0;
+                        m_axis.tlast    = 1;
+                        m_axis.tdata    = o_crc_res;
+                        w_nxt_s         = S0;
 
                     end
 
                     default : begin
 
-                        q_vld           <= 1;
-                        m_axis.tdata    <= q_cnt - 2;
+                        q_vld           = 1;
+                        m_axis.tdata    = q_cnt - 2;
 
                     end
 
@@ -98,7 +98,7 @@ module lab4_source #(
 
             end
             
-            default : w_nxt_s <= S0;
+            default : w_nxt_s = S0;
 
         endcase
 
