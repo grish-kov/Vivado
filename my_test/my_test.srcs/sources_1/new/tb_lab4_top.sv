@@ -2,12 +2,12 @@
 
 module tb_lab4_top #(
     parameter C_T_CLK = 1.0
-) ();
+    ) ();
     logic       i_clk = 1;
     logic [2:0] i_rst = 3'b000;
     logic       i_reset = 0;
 
-    lab4_top UUT (
+    lab4_top UUT1 (
         .i_clk      (i_clk),
         .i_rst      (i_rst),
         .i_reset    (i_reset)
