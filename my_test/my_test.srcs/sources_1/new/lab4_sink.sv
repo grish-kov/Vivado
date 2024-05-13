@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
+
 module lab4_sink #(
-    parameter int   G_P_LEN     = 8,                             // Packet length  
+    parameter int   G_P_LEN     = 10,                             // Packet length  
                     G_BYT       = 1,                              // Amout of byte in data
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
@@ -26,7 +27,7 @@ module lab4_sink #(
     typedef enum{
 
         S0,     // Init. state, find header
-        S1     // Get packet length, write data to CRC
+        S1      // Get packet length, write data to CRC
     
     } t_fsm_s;
 
