@@ -66,42 +66,45 @@ module lab4_source #(
                     m_crc_rst       = 0;
 
                 end
-            
-                case (q_cnt)
 
-                    0: ;
+                if (m_axis.tready)
 
-                    1 :
-                        m_axis.tdata    = 72;
-  
+                    case (q_cnt)
 
-                    2 :
-                        m_axis.tdata    = buf_len;
-                    
-                    buf_len + 3 : begin
+                        0: ;
+
+                        1 : 
+                            
+                            m_axis.tdata    = 72;
+    
+
+                        2 :
+
+                            m_axis.tdata    = buf_len;
                         
-                        q_vld           = 0;
-                        m_axis.tvalid   = 0;
+                        buf_len + 3 : begin
+                            
+                            q_vld           = 0;
+                            m_axis.tvalid   = 0;
 
-                    end
+                        end
+                        
+                        buf_len + 4 : begin
 
-                    buf_len + 4 : begin
+                            m_axis.tvalid   = 1;
+                            m_axis.tlast    = 1;
+                            m_axis.tdata    = o_crc_res;
+                            
+                        end
 
-                        m_axis.tvalid   = 1;
-                        m_axis.tlast    = 1;
-                        m_axis.tdata    = o_crc_res;
+                        default : begin
+                        
+                            q_vld           = 1;
+                            m_axis.tdata    = q_cnt - 2;
 
-                    end
-
-                    default : begin
-
-                        q_vld           = 1;
-                        m_axis.tdata    = q_cnt - 2;
-
-                    end
-
-                endcase
-
+                        end
+                        
+                    endcase
             end
 
             default : ;
@@ -112,7 +115,7 @@ module lab4_source #(
 
     always_ff @(posedge i_clk) begin
 
-        if (q_cnt < buf_len + 4) 
+        if ((q_cnt < buf_len + 4) & m_axis.tready) 
             q_cnt <= q_cnt + 1;
 
         if (q_cnt == buf_len + 4)
