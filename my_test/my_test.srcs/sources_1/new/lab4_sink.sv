@@ -11,23 +11,28 @@ module lab4_sink #(
     if_axis.s   s_axis
 );
 
-    logic [G_BIT_WIDTH - 1 : 0] o_crc_res   = '0;       // Result of calculated CRC
-    logic [G_BIT_WIDTH - 1 : 0] i_crc_wrd   = '0;       // Input for CRC
+    reg [G_BIT_WIDTH - 1 : 0] o_crc_res     = '0;       // Result of calculated CRC
+    reg [G_BIT_WIDTH - 1 : 0] q_data        = '0;       // Input for CRC
 
-    logic [G_BIT_WIDTH - 1 : 0] q_crc_r     = '0;       // Received CRC
-    logic [G_BIT_WIDTH - 1 : 0] q_crc_c     = '0;       // Calculated CRC
+    reg [G_BIT_WIDTH - 1 : 0] q_crc_r       = '0;       // Received CRC
+    reg [G_BIT_WIDTH - 1 : 0] q_crc_c       = '0;       // Calculated CRC
 
-    reg   [7 : 0]               q_len       = '0;       // Received packet length
-    reg   [7 : 0]               q_cnt       = '0;       // Data counter
-    
+    reg [G_BIT_WIDTH - 1 : 0] q_len         = '0;       // Received packet length
+    reg [G_BIT_WIDTH - 1 : 0] q_cnt1        = '0;       // Data counter
+    reg [G_BIT_WIDTH - 1 : 0] q_cnt2        = '0;       // Data counter
+
     logic   q_vld       = 0;                            // Validity of data for CRC
     logic   m_crc_rst   = 0;                            // Reset for CRC, active - high
     logic   q_err       = 0;                            // Logic error, when received CRC != calculated CRC - 1, else - 0
+
+    logic   q_trd       = 0;
  
     typedef enum{
 
         S0,     // Init. state, find header
-        S1      // Get packet length, write data to CRC
+        S1,     // Get packet length
+        S2,     // Write data to CRC
+        S3      // Calculate CRC
     
     } t_fsm_s;
 
@@ -39,17 +44,27 @@ module lab4_sink #(
         s_axis.tready <= 1;
     
     end
+
     always_comb begin
 
         w_nxt_s = q_crnt_s;
 
         case(q_crnt_s)
 
-            S0 : w_nxt_s = (s_axis.tdata == 72 & s_axis.tvalid & s_axis.tready) ? S1 : S0;
+            S0 : 
+                w_nxt_s = (q_data == 72 & s_axis.tvalid & s_axis.tready) ? S1 : S0;
 
-            S1 : w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast) ? S0 : S1;
+            S1 : 
+                w_nxt_s = S2;
 
-            default : w_nxt_s = S0;
+            S2 : 
+                w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast) ? S3 : S2;
+
+            S3 : 
+                w_nxt_s = S0;
+
+            default : 
+                w_nxt_s = S0;
 
         endcase
 
@@ -59,136 +74,57 @@ module lab4_sink #(
         
         case (q_crnt_s)
 
-            S0: begin
+            S0 : begin
 
-                if (s_axis.tvalid & s_axis.tready) begin 
+                if (s_axis.tvalid & s_axis.tready) begin
 
-                    q_len       <= s_axis.tdata;
                     m_crc_rst   <= 0;
+                    q_vld       <= 0;
 
                 end
+
             end
 
-            S1: begin
-                
-                if (s_axis.tvalid & s_axis.tready & !s_axis.tlast) begin
+            S1 :    q_len       <= s_axis.tdata;
 
-                    i_crc_wrd   <= s_axis.tdata; 
-                    q_vld       <= 1;
-                
-                end                    
+            S2 : begin                 
 
-                if (s_axis.tvalid & s_axis.tready & s_axis.tlast) begin
+                q_vld <= (s_axis.tvalid & s_axis.tready & !s_axis.tlast & i_clk);
 
-                    q_vld       <= 0;
+                if (s_axis.tvalid & s_axis.tready & s_axis.tlast)
                     m_crc_rst   <= 1; 
-                
-                end 
 
             end
+
+            S3 :    ;
         
             default : ;
 
         endcase
     
-        if (s_axis.tlast) begin
+        q_data <= s_axis.tdata;
 
-            q_crc_r <= s_axis.tdata;     
-            q_crc_c <= o_crc_res;
-
-            q_err   <= (q_crc_r == q_crc_c) ? 0 : 1;
-        end 
-
-    end
-
-    always_ff @(posedge i_clk) begin
-    
-        if (q_cnt < q_len + 1 & q_crnt_s == S1)
-            q_cnt <= q_cnt + 1;
-
-        if ((q_cnt == q_len + 1 | !q_len) & q_crnt_s == S1)                    
-            q_cnt <= 1;
-    
-    end
-
-    always_ff @(posedge i_clk) begin
-    
-        if (i_rst) begin
-
-            q_vld       <= 0;
-            q_cnt       <= 1;
-            q_crnt_s    <= S0;
-        
-        end
-        else
-            q_crnt_s <= w_nxt_s;
-    
-    end
-
-    /*always_ff @(posedge i_clk) begin
-
-        if (i_rst) begin
-
-            q_vld       <= 0;
-            q_cnt       <= 0;
-            q_crnt_s    <= S0;
-        
-        end 
+        if (q_trd) 
+            s_axis.tready <= 0;
         else 
-            case (q_crnt_s)
-            
-                S0: begin
+            s_axis.tready <= 1;
 
-                    q_cnt       <= 0;
-                    m_crc_rst   <= 0;
+    end
 
-                    if (s_axis.tdata == 72 & s_axis.tvalid)
-                        q_crnt_s    <= S1; 
+    always_ff @(posedge i_clk) begin
 
-                end
-
-                S1: begin
- 
-                    q_len <= s_axis.tdata;
-
-                    q_vld       <= 1;
-                    q_crnt_s    <= S2;
-
-                end
-
-                S2: begin
-
-                    if (q_cnt < q_len - 1) begin
-                        
-                        i_crc_wrd   <= q_cnt;
-                        q_cnt       <= q_cnt + 1;         
-
-                    end          
-
-                    if (q_cnt == q_len - 1 | !q_len) begin
-                        
-                        i_crc_wrd   <= 0;
-                        m_crc_rst   <= 1;
-                        q_vld       <= 0;
-                        q_crnt_s    <= S0;
-
-                    end
-
-                end
-            
-                default: q_crnt_s <= S0;
-
-            endcase
-
-        if (s_axis.tlast) begin
-
+        if (s_axis.tlast)
             q_crc_r <= s_axis.tdata;
+
+        if (q_crnt_s == S3)  
             q_crc_c <= o_crc_res;
 
-            q_err <= (q_crc_r == q_crc_c) ? 0 : 1;
-        end       
+        q_err <= (q_crc_r == q_crc_c) ? 0 : 1;
 
-    end*/
+    end
+
+    always_ff @(posedge i_clk)
+        q_crnt_s <= (i_rst) ? S0 : w_nxt_s;
 
     CRC #(
 		.POLY_WIDTH         (G_BIT_WIDTH),  // Size of The Polynomial Vector
@@ -204,7 +140,7 @@ module lab4_sink #(
 		.i_crc_ini_vld      ('0),           // Input Initial Valid
 		.i_crc_ini_dat      ('0),           // Input Initial Value
 		.i_crc_wrd_vld      (q_vld),        // Word Data Valid Flag 
-		.i_crc_wrd_dat      (s_axis.tdata), // Word Data
+		.i_crc_wrd_dat      (q_data),       // Word Data
         .o_crc_res_dat      (o_crc_res)     // Output CRC from Each Input Word
 	);
 
