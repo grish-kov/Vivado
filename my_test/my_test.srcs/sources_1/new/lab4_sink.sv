@@ -17,15 +17,20 @@ module lab4_sink #(
     reg [G_BIT_WIDTH - 1 : 0] q_crc_r       = '0;       // Received CRC
     reg [G_BIT_WIDTH - 1 : 0] q_crc_c       = '0;       // Calculated CRC
 
-    reg [G_BIT_WIDTH - 1 : 0] q_len         = '0;       // Received packet length
-    reg [G_BIT_WIDTH - 1 : 0] q_cnt1        = '0;       // Data counter
-    reg [G_BIT_WIDTH - 1 : 0] q_cnt2        = '0;       // Data counter
+    reg [G_BIT_WIDTH - 1 : 0] q_len         =  1;       // Received packet length
+    reg [G_BIT_WIDTH - 1 : 0] q_cnt         =  0;       // Data counter
 
     logic   q_vld       = 0;                            // Validity of data for CRC
     logic   m_crc_rst   = 0;                            // Reset for CRC, active - high
-    logic   q_err       = 0;                            // Logic error, when received CRC != calculated CRC - 1, else - 0
 
-    logic   q_trd       = 0;
+    logic   q_exp_tlast     = 0;
+
+    logic   q_err_crc           = 0;                    // CRC error, when received CRC != calculated CRC - 1, else - 0
+    logic   q_err_exp_tlast     = 0;                    // Tlast error, when expected tlast, but not found - 1, else - 0
+    logic   q_err_uxexp_tlast   = 0;                    // Tlast error, when unexpected tlast, but found - 1, else - 0
+
+
+    logic   q_trd       = 0;                            // Simulated lower tready
  
     typedef enum{
 
@@ -52,16 +57,16 @@ module lab4_sink #(
         case(q_crnt_s)
 
             S0 : 
-                w_nxt_s = (q_data == 72 & s_axis.tvalid & s_axis.tready) ? S1 : S0;
+                w_nxt_s = (s_axis.tdata == 72 & s_axis.tvalid & s_axis.tready) ? S1 : S0;
 
             S1 : 
-                w_nxt_s = S2;
+                w_nxt_s = (s_axis.tvalid & s_axis.tready) ? S2 : S1;
 
             S2 : 
-                w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast) ? S3 : S2;
+                w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast & (q_cnt == q_len | q_cnt == q_len + 1)) ? S3 : S2;
 
             S3 : 
-                w_nxt_s = S0;
+                w_nxt_s = (!s_axis.tvalid & s_axis.tready) ? S0 : S3;
 
             default : 
                 w_nxt_s = S0;
@@ -89,7 +94,7 @@ module lab4_sink #(
 
             S2 : begin                 
 
-                q_vld <= (s_axis.tvalid & s_axis.tready & !s_axis.tlast & i_clk);
+                q_vld <= (s_axis.tvalid & s_axis.tready & !s_axis.tlast);
 
                 if (s_axis.tvalid & s_axis.tready & s_axis.tlast)
                     m_crc_rst   <= 1; 
@@ -106,20 +111,42 @@ module lab4_sink #(
 
         if (q_trd) 
             s_axis.tready <= 0;
-        else 
+        else
             s_axis.tready <= 1;
 
     end
 
     always_ff @(posedge i_clk) begin
 
-        if (s_axis.tlast)
-            q_crc_r <= s_axis.tdata;
+        if (q_crnt_s == S3) begin
 
-        if (q_crnt_s == S3)  
-            q_crc_c <= o_crc_res;
+            q_err_crc           <= (q_data != o_crc_res);
+            q_err_exp_tlast     <= 0;
 
-        q_err <= (q_crc_r == q_crc_c) ? 0 : 1;
+        end
+
+        if (q_crnt_s == S0)
+            q_err_crc           <= 0;
+
+        if ((q_cnt < q_len) & s_axis.tlast)
+            q_err_uxexp_tlast   <= 1;
+        else 
+            q_err_uxexp_tlast   <= 0;
+
+        if (s_axis.tready & s_axis.tvalid)
+            q_err_exp_tlast   <= (q_exp_tlast & !s_axis.tlast);
+
+    end
+
+    always_ff @(posedge i_clk) begin
+    
+        if (q_cnt < q_len + 1 & q_crnt_s == S2 & s_axis.tready & s_axis.tvalid)
+            q_cnt <= q_cnt + 1;
+
+        if (q_cnt == q_len + 1 & q_crnt_s == S3)                    
+            q_cnt <= 1;
+            
+        q_exp_tlast <= (q_cnt == q_len + 1);
 
     end
 

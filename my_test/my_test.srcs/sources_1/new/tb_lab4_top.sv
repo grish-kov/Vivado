@@ -21,22 +21,23 @@ module tb_lab4_top #(
         #10 i_rst = 3'b010;
 
     end
-    always #(C_T_CLK * 130) begin
 
-            i_rst[2] = 1;
-            #1 i_rst[2] = 0;
-    end
+    // always #(C_T_CLK * 130) begin
 
-     always #(C_T_CLK * 149)begin
+    //         i_rst[2] = 1;
+    //         #1 i_rst[2] = 0;
+    // end
 
-            i_reset = 1;
-            #1 i_reset = 0;
-    end
+    //  always #(C_T_CLK * 149)begin
 
-    always #(C_T_CLK * 122)begin
+    //         i_reset = 1;
+    //         #1 i_reset = 0;
+    // end
 
-            i_rst[0] = 1;
-            #1 i_rst[0] = 0;
-    end
+    // always #(C_T_CLK * 122)begin
+
+    //         i_rst[0] = 1;
+    //         #1 i_rst[0] = 0;
+    // end
 
 endmodule

@@ -60,10 +60,11 @@ module lab4_source #(
             
             S1 : begin 
 
+                m_crc_rst       = 0;
+                
                 if (!m_axis.tvalid) begin
                     
                     m_axis.tvalid   = 1;
-                    m_crc_rst       = 0;
 
                 end
 
