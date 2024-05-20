@@ -8,10 +8,13 @@ module lab4_sink #(
 )(
     input       i_clk,
                 i_rst,      // Reset, active - high
-    if_axis.s   s_axis
+    if_axis.s   s_axis,
+    output wire         o_err_crc,        
+                        o_err_exp_tlast,  
+                        o_err_uxexp_tlast
 );
 
-    reg [G_BIT_WIDTH - 1 : 0] o_crc_res     = '0;       // Result of calculated CRC
+    reg [G_BIT_WIDTH - 1 : 0] o_crc_res;                // Result of calculated CRC
     reg [G_BIT_WIDTH - 1 : 0] q_data        = '0;       // Input for CRC
 
     reg [G_BIT_WIDTH - 1 : 0] q_crc_r       = '0;       // Received CRC
@@ -22,8 +25,7 @@ module lab4_sink #(
 
     logic   q_vld       = 0;                            // Validity of data for CRC
     logic   m_crc_rst   = 0;                            // Reset for CRC, active - high
-
-    logic   q_exp_tlast     = 0;
+    logic   q_exp_tlast = 0;                            // Flag for expected tlast
 
     logic   q_err_crc           = 0;                    // CRC error, when received CRC != calculated CRC - 1, else - 0
     logic   q_err_exp_tlast     = 0;                    // Tlast error, when expected tlast, but not found - 1, else - 0
@@ -42,7 +44,7 @@ module lab4_sink #(
     } t_fsm_s;
 
     t_fsm_s q_crnt_s = S0, w_nxt_s;
-    
+
     initial begin
 
         s_axis.tvalid <= 1;
@@ -138,6 +140,10 @@ module lab4_sink #(
 
     end
 
+    assign o_err_crc            = q_err_crc;      
+    assign o_err_exp_tlast      = q_err_exp_tlast;  
+    assign o_err_uxexp_tlast    = q_err_uxexp_tlast;
+    
     always_ff @(posedge i_clk) begin
     
         if (q_cnt < q_len + 1 & q_crnt_s == S2 & s_axis.tready & s_axis.tvalid)
@@ -166,8 +172,10 @@ module lab4_sink #(
 		.i_crc_s_rst_p      (m_crc_rst),    // Sync Reset, Active High. Reset CRC To Initial Value.
 		.i_crc_ini_vld      ('0),           // Input Initial Valid
 		.i_crc_ini_dat      ('0),           // Input Initial Value
-		.i_crc_wrd_vld      (q_vld),        // Word Data Valid Flag 
+		.i_crc_wrd_vld      (q_vld),        // Word Data Valid Flag
+        .o_crc_wrd_rdy      (),             // Ready To Recieve Word Data 
 		.i_crc_wrd_dat      (q_data),       // Word Data
+        .o_crc_res_vld      (),             // Output Flag of Validity, Active High for Each WORD_COUNT Number
         .o_crc_res_dat      (o_crc_res)     // Output CRC from Each Input Word
 	);
 

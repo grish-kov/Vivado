@@ -8,7 +8,10 @@ module lab4_top #(
 ) (
     input wire [2:0]    i_rst,
           wire          i_clk,
-                        i_reset
+                        i_reset,
+    output wire         o_err_crc,        
+                        o_err_exp_tlast,  
+                        o_err_uxexp_tlast
 );  
 
     if_axis #(.N(G_BYT)) mst_fifo();  // Interface for connecting sorce and FIFO
@@ -60,7 +63,10 @@ module lab4_top #(
     ) u_sink (
         .i_clk                  (i_clk),   
         .i_rst                  (i_rst[2]),
-        .s_axis                 (slv_fifo)
+        .s_axis                 (slv_fifo),
+        .o_err_crc              (o_err_crc),
+        .o_err_exp_tlast        (o_err_exp_tlast),
+        .o_err_uxexp_tlast      (o_err_uxexp_tlast)
         );
    
 endmodule

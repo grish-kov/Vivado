@@ -8,9 +8,15 @@ module tb_lab4_sink #(
     logic i_clk = 1; 
     logic i_rst = 0;
 
-    int tst_crc_arr[13] = {'h1 , 'h0 , 'hbc, 'hc3, 'h30, 'hdd, 'ha3, 'hb5, 'h1b, 'h2d, 'hf0, 'h7 , 'h83};
-                        //  -     01    02    03    04    05    06    07    08    09     0a   0b    0c  
-                        //  0     1     2     3     4     5     6     7     8     9      10   11    12
+    int tst_crc_arr[24] = { 'h1 , 'h0 , 'h7f, 'hbc, 'h30, 'hdd, 'ha3, 'hb5, 
+                        //  -     01    02    03    04    05    06    07
+                        //  0     1     2     3     4     5     6     7
+                            'h1b, 'h2d, 'hf0, 'h7 , 'h83, 'h47, 'h61, 'h91,    
+                        //   08    09     0a   0b    0c    0d    0e    0f 
+                        //   8     9      10   11    12    13    14    15
+                            'h3a, 'h27 , 'hdd, 'hda, 'hda, 'hf , 'hae, 'he5}; 
+                        //  10     11    12    13    14    15    16    17
+                        //  16     17    18    19    20    21    22    23
 
     if_axis#(.N(1)) m_axis ();
 
@@ -132,6 +138,15 @@ endtask
 
         #(T_CLK * 5);
         send_packet(5, 7'b1111101); // fake crc, header without break, length & crc with breaks
+
+        #(T_CLK * 5);
+        send_packet(19, 7'b1110101);
+
+        #(T_CLK * 5);
+        send_packet(20, 7'b1110101);
+
+        #(T_CLK * 5);
+        send_packet(3, 7'b1000101);
 
     end
 endmodule
