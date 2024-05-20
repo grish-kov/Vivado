@@ -36,6 +36,7 @@ module lab4_sink #(
  
     typedef enum{
 
+        SS,
         S0,     // Init. state, find header
         S1,     // Get packet length
         S2,     // Write data to CRC
@@ -45,18 +46,14 @@ module lab4_sink #(
 
     t_fsm_s q_crnt_s = S0, w_nxt_s;
 
-    initial begin
-
-        s_axis.tvalid <= 1;
-        s_axis.tready <= 1;
-    
-    end
-
     always_comb begin
 
         w_nxt_s = q_crnt_s;
 
         case(q_crnt_s)
+
+            SS: 
+                w_nxt_s = S0;
 
             S0 : 
                 w_nxt_s = (s_axis.tdata == 72 & s_axis.tvalid & s_axis.tready) ? S1 : S0;
@@ -65,10 +62,10 @@ module lab4_sink #(
                 w_nxt_s = (s_axis.tvalid & s_axis.tready) ? S2 : S1;
 
             S2 : 
-                w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast & (q_cnt == q_len | q_cnt == q_len + 1)) ? S3 : S2;
+                w_nxt_s = (s_axis.tvalid & s_axis.tlast & (q_cnt == q_len | q_cnt == q_len + 1)) ? S3 : S2;
 
             S3 : 
-                w_nxt_s = S0;
+                w_nxt_s = SS;
 
             default : 
                 w_nxt_s = S0;
@@ -81,40 +78,39 @@ module lab4_sink #(
         
         case (q_crnt_s)
 
-            S0 : begin
+            SS: begin
 
-                if (s_axis.tvalid & s_axis.tready) begin
+                    m_crc_rst       <= 0;
+                    q_vld           <= 0;
+                    s_axis.tready   <= 0;
 
-                    m_crc_rst   <= 0;
-                    q_vld       <= 0;
+            end  
 
-                end
+            S0 : 
+                s_axis.tready   <= 1;
 
-            end
-
-            S1 :    q_len       <= s_axis.tdata;
+            S1 :    
+                q_len           <= s_axis.tdata;
 
             S2 : begin                 
 
                 q_vld <= (s_axis.tvalid & s_axis.tready & !s_axis.tlast);
 
                 if (s_axis.tvalid & s_axis.tready & s_axis.tlast)
-                    m_crc_rst   <= 1; 
+                    m_crc_rst       <= 1; 
+
+                if (s_axis.tlast)
+                    s_axis.tready   <= 0;
 
             end
 
             S3 :    ;
-        
+                
             default : ;
 
         endcase
     
         q_data <= s_axis.tdata;
-
-        if (q_trd) 
-            s_axis.tready <= 0;
-        else
-            s_axis.tready <= 1;
 
     end
 
@@ -157,7 +153,7 @@ module lab4_sink #(
     end
 
     always_ff @(posedge i_clk)
-        q_crnt_s <= (i_rst) ? S0 : w_nxt_s;
+        q_crnt_s <= (i_rst) ? SS : w_nxt_s;
 
     CRC #(
 		.POLY_WIDTH         (G_BIT_WIDTH),  // Size of The Polynomial Vector
