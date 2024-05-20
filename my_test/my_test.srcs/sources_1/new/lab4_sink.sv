@@ -10,8 +10,8 @@ module lab4_sink #(
                 i_rst,      // Reset, active - high
     if_axis.s   s_axis,
     output wire         o_err_crc,        
-                        o_err_exp_tlast,  
-                        o_err_uxexp_tlast
+                        o_err_mis_tlast,  
+                        o_err_unx_tlast
 );
 
     reg [G_BIT_WIDTH - 1 : 0] o_crc_res;                // Result of calculated CRC
@@ -28,8 +28,8 @@ module lab4_sink #(
     logic   q_exp_tlast = 0;                            // Flag for expected tlast
 
     logic   q_err_crc           = 0;                    // CRC error, when received CRC != calculated CRC - 1, else - 0
-    logic   q_err_exp_tlast     = 0;                    // Tlast error, when expected tlast, but not found - 1, else - 0
-    logic   q_err_uxexp_tlast   = 0;                    // Tlast error, when unexpected tlast, but found - 1, else - 0
+    logic   q_err_mis_tlast     = 0;                    // Tlast error, when expected tlast, but not found - 1, else - 0
+    logic   q_err_unx_tlast     = 0;                    // Tlast error, when unexpected tlast, but found - 1, else - 0
 
 
     logic   q_trd       = 0;                            // Simulated lower tready
@@ -68,7 +68,7 @@ module lab4_sink #(
                 w_nxt_s = (s_axis.tvalid & s_axis.tready & s_axis.tlast & (q_cnt == q_len | q_cnt == q_len + 1)) ? S3 : S2;
 
             S3 : 
-                w_nxt_s = (!s_axis.tvalid & s_axis.tready) ? S0 : S3;
+                w_nxt_s = S0;
 
             default : 
                 w_nxt_s = S0;
@@ -123,7 +123,7 @@ module lab4_sink #(
         if (q_crnt_s == S3) begin
 
             q_err_crc           <= (q_data != o_crc_res);
-            q_err_exp_tlast     <= 0;
+            q_err_mis_tlast     <= 0;
 
         end
 
@@ -131,18 +131,18 @@ module lab4_sink #(
             q_err_crc           <= 0;
 
         if ((q_cnt < q_len) & s_axis.tlast)
-            q_err_uxexp_tlast   <= 1;
+            q_err_unx_tlast   <= 1;
         else 
-            q_err_uxexp_tlast   <= 0;
+            q_err_unx_tlast   <= 0;
 
-        if (s_axis.tready & s_axis.tvalid)
-            q_err_exp_tlast   <= (q_exp_tlast & !s_axis.tlast);
+        if (s_axis.tready & s_axis.tvalid & q_crnt_s == S2)
+            q_err_mis_tlast   <= (q_exp_tlast & !s_axis.tlast);
 
     end
 
     assign o_err_crc            = q_err_crc;      
-    assign o_err_exp_tlast      = q_err_exp_tlast;  
-    assign o_err_uxexp_tlast    = q_err_uxexp_tlast;
+    assign o_err_mis_tlast      = q_err_mis_tlast;  
+    assign o_err_unx_tlast      = q_err_unx_tlast;
     
     always_ff @(posedge i_clk) begin
     

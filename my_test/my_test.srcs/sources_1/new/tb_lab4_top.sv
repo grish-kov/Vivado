@@ -8,9 +8,12 @@ module tb_lab4_top #(
     logic       i_reset = 0;
 
     lab4_top UUT1 (
-        .i_clk      (i_clk),
-        .i_rst      (i_rst),
-        .i_reset    (i_reset)
+        .i_clk                  (i_clk),
+        .i_rst                  (i_rst),
+        .i_reset                (i_reset),
+        .o_err_crc              (o_err_crc),
+        .o_err_mis_tlast        (o_err_mis_tlast),
+        .o_err_unx_tlast        (o_err_unx_tlast)
     );
     
     always #(C_T_CLK / 2) i_clk = ~i_clk;
@@ -22,22 +25,22 @@ module tb_lab4_top #(
 
     end
 
-    // always #(C_T_CLK * 130) begin
+    always #(C_T_CLK * 130) begin
 
-    //         i_rst[2] = 1;
-    //         #1 i_rst[2] = 0;
-    // end
+            i_rst[2] = 1;
+            #1 i_rst[2] = 0;
+    end
 
-    //  always #(C_T_CLK * 149)begin
+     always #(C_T_CLK * 149)begin
 
-    //         i_reset = 1;
-    //         #1 i_reset = 0;
-    // end
+            i_reset = 1;
+            #1 i_reset = 0;
+    end
 
-    // always #(C_T_CLK * 122)begin
+    always #(C_T_CLK * 122)begin
 
-    //         i_rst[0] = 1;
-    //         #1 i_rst[0] = 0;
-    // end
+            i_rst[0] = 1;
+            #1 i_rst[0] = 0;
+    end
 
 endmodule

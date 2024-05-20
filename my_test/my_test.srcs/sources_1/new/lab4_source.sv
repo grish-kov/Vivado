@@ -13,20 +13,21 @@ module lab4_source #(
     if_axis.m   m_axis
 );
 
-    logic   [G_BIT_WIDTH - 1 : 0] o_crc_res;                   // Result of calculated CRC
-    logic   [G_BIT_WIDTH - 1 : 0] i_crc_wrd;                   // Input for CRC
+    reg     [G_BIT_WIDTH - 1 : 0] o_crc_res;                    // Result of calculated CRC
+    reg     [G_BIT_WIDTH - 1 : 0] i_crc_wrd;                    // Input for CRC
 
-    logic   [G_CNT_WIDTH : 0] buf_len       = '0;               // Packet length buffer
+    reg     [G_CNT_WIDTH : 0] buf_len       = '0;               // Packet length buffer
 
     reg     [G_CNT_WIDTH : 0] q_cnt         = 0;                // Data counter
+    reg     [G_CNT_WIDTH : 0] q_cnt_idle    = 0;                // Data counter
 
     logic   q_vld       = 0;                                    // Validity of data for CRC
     logic   m_crc_rst   = 0;                                    // Reset for CRC, active - high
 
     typedef enum{
 
-        S0 = 0,     // Init. state
-        S1 = 1      // Payload to FIFO
+        S0,     // Init. state
+        S1      // Payload to FIFO
         
     } t_fsm_s;
 
@@ -40,6 +41,22 @@ module lab4_source #(
 
     end
     
+    always_comb begin
+
+        w_nxt_s = q_crnt_s; 
+
+        case (q_crnt_s)
+
+            S0 : w_nxt_s = S1;
+
+            S1 : if (m_axis.tlast) w_nxt_s = S0; 
+
+            default: w_nxt_s = S0;
+
+        endcase
+
+    end
+
     always_ff @(posedge i_clk) begin
 
         if (i_len > 0) 
@@ -63,11 +80,8 @@ module lab4_source #(
 
                 m_crc_rst       <= 0;
                 
-                if (!m_axis.tvalid) begin
-                    
+                if (!m_axis.tvalid)
                     m_axis.tvalid   <= 1;
-
-                end
 
                 if (m_axis.tready)
 
@@ -75,10 +89,8 @@ module lab4_source #(
 
                         0: ;
 
-                        1 : 
-                            
+                        1 :
                             m_axis.tdata    <= 72;
-    
 
                         2 :
 
@@ -122,9 +134,6 @@ module lab4_source #(
 
         if (q_cnt == buf_len + 4)
             q_cnt   <= 0; 
-        
-        if (q_crnt_s == S0)
-            q_cnt   <=  0; 
 
     end
 
@@ -135,23 +144,6 @@ module lab4_source #(
 
         else
             q_crnt_s <= w_nxt_s;
- 
-
-    always_comb begin
-
-        w_nxt_s = q_crnt_s; 
-
-        case (q_crnt_s)
-
-            S0: w_nxt_s = S1;
-
-            S1: if (m_axis.tlast) w_nxt_s = S0; 
-
-            default: w_nxt_s = S0;
-
-        endcase
-
-    end
 
     CRC #(
 		.POLY_WIDTH         (G_BIT_WIDTH),  // Size of The Polynomial Vector
