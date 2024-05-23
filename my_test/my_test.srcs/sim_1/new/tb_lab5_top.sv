@@ -13,8 +13,7 @@ module tb_lab5_top #(
     logic   i_rst_n = 1;
     logic   i_rst   = 0;
     logic   i_clk   = 1;
-    logic   i_fifo_reset;
-    reg [31 : 0] w_length, w_err;
+    reg [7 : 0] w_length, w_err;
 
     typedef logic [G_RM_ADDR_W-1:0] t_xaddr;
 	typedef logic [C_RM_DATA_W-1:0] t_xdata;
@@ -87,11 +86,11 @@ module tb_lab5_top #(
 		end
 	endtask : t_axil_rd
 
-    localparam t_xaddr RW_TRN_ENA = 'h000; 
-	localparam t_xaddr WR_TRN_TBL = 'h008; 
-	localparam t_xaddr RW_GLU_ENA = 'h100; 
-	localparam t_xaddr RW_GLU_OFS = 'h108; 
-	localparam t_xaddr RW_DWS_PRM = 'h200; 
+    localparam t_xaddr RW_LEN_ADDR  = 'h001; 
+	localparam t_xaddr WR_TRN_TBL   = 'h008; 
+	localparam t_xaddr RW_GLU_ENA   = 'h100; 
+	localparam t_xaddr RW_GLU_OFS   = 'h108; 
+	localparam t_xaddr RW_DWS_PRM   = 'h200; 
 
     always #(dt / 2) i_clk = ~i_clk;
 
@@ -105,32 +104,22 @@ module tb_lab5_top #(
 
     initial begin
 		
-		t_axil_init; #20;
-
-		t_axil_wr(.ADDR(WR_TRN_TBL), .DATA({8'(0), 24'(625)})); #(dt); // truncation table: 31:24 - scan mode id, 23:0 - max period?
-		t_axil_wr(.ADDR(WR_TRN_TBL), .DATA({8'(0), 24'(666)})); #(dt);
-		t_axil_wr(.ADDR(RW_GLU_ENA), .DATA({8'(0), 24'(1)})); #(dt);
+        t_axil_init; 
+        #10;
+        w_length = 5;
+        t_axil_wr(.ADDR(RW_LEN_ADDR), .DATA(w_length));
 
 	end
 
     lab5_top u_uut(
 
-        .i_clk          (i_clk),
-        .i_rst          (i_rst),
-        .i_length       (w_length),
-        .i_err          (w_err)
+        .i_clk              (i_clk),
+        .i_rst              (i_rst),
+        .i_length           (w_length),
+        .i_err              (w_err),
+
+        .s_axil				(s_axil),
+		.m_axil				(m_axil)
     );
-
-    axil_fifo axil_uut (
-		.s_axi_aclk_p      	(i_clk),
-		.m_axi_aclk_p      	(i_clk),
-		
-		.s_axi_arst_n		(i_rst_n),
-		.m_axi_arst_n		(i_rst_n),
-		.i_fifo_rst_n		(i_fifo_reset),
-
-		.s_axi				(s_axil),
-		.m_axi				(m_axil)
-	);
 
 endmodule
