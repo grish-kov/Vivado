@@ -9,6 +9,7 @@ module lab4_top #(
     input wire [2:0]    i_rst,
           wire          i_clk,
                         i_reset,
+                        i_length,
     output wire         o_err_crc,        
                         o_err_mis_tlast,  
                         o_err_unx_tlast
@@ -24,6 +25,7 @@ module lab4_top #(
     ) u_source (
         .i_clk                  (i_clk),
         .i_rst                  (i_rst[0]),
+        .i_len                  (i_length),
         .m_axis                 (mst_fifo)
         );
 
