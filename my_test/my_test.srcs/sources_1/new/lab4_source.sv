@@ -5,16 +5,15 @@ module lab4_source #(
                     G_BYT       = 1,                              // Amout of byte in data
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
-) (
-    input               i_clk,
-                        i_rst,      // Reset, active - high
-    [G_CNT_WIDTH : 0]   i_len,       // Input packet length
+) (     
+    input                   i_clk,
+                            i_rst,      // Reset, active - high
+    [G_BIT_WIDTH - 1 : 0]   i_len,       // Input packet length
     
     if_axis.m   m_axis
 );
 
     reg     [G_BIT_WIDTH - 1 : 0] o_crc_res;                    // Result of calculated CRC
-    reg     [G_BIT_WIDTH - 1 : 0] i_crc_wrd;                    // Input for CRC
 
     reg     [G_CNT_WIDTH : 0] buf_len       = '0;               // Packet length buffer
 
@@ -140,10 +139,9 @@ module lab4_source #(
     always_ff @(posedge i_clk)
         
         if (i_rst)
-            q_crnt_s        <= S0;
-
+            q_crnt_s    <= S0;
         else
-            q_crnt_s <= w_nxt_s;
+            q_crnt_s    <= w_nxt_s;
 
     CRC #(
 		.POLY_WIDTH         (G_BIT_WIDTH),  // Size of The Polynomial Vector
