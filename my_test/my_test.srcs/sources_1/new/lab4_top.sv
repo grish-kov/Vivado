@@ -47,15 +47,15 @@ module lab4_top #(
         .i_fifo_a_rst_n         (!i_reset),
 
         .s_axis                 (mst_fifo),
-        .m_axis                 (slv_fifo),
+        .m_axis                 (slv_fifo)
 
-        .o_fifo_a_tfull         (o_fifo_a_tfull),
-        .o_fifo_p_tfull         (o_fifo_p_tfull),
-        .o_fifo_w_count         (o_fifo_w_count),
+        // .o_fifo_a_tfull         (o_fifo_a_tfull),
+        // .o_fifo_p_tfull         (o_fifo_p_tfull),
+        // .o_fifo_w_count         (o_fifo_w_count),
         
-        .o_fifo_a_empty         (o_fifo_a_empty),
-        .o_fifo_p_empty         (o_fifo_p_empty),
-        .o_fifo_r_count         (o_fifo_r_count)
+        // .o_fifo_a_empty         (o_fifo_a_empty),
+        // .o_fifo_p_empty         (o_fifo_p_empty),
+        // .o_fifo_r_count         (o_fifo_r_count)
         );
     
     // Initiating sink module

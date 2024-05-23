@@ -2,10 +2,13 @@
 
 module lab5_top(
 
-    input reg [31 : 0]  i_length,
+    input reg [7 : 0]  i_length,
                         i_err,
     input               i_clk,
-                        i_rst
+                        i_rst,
+
+    if_axil.m           m_axil,
+    if_axil.s           s_axil
 );
 
     logic   o_err_crc,        
@@ -14,6 +17,8 @@ module lab5_top(
     
     reg [7 : 0] w_len;
     
+    
+
     (* keep_hierarchy="yes" *)
     lab4_top #(
 
@@ -38,8 +43,10 @@ module lab5_top(
         .o_err                  (o_err),
         .i_err_crc              (o_err_crc),
         .i_err_mis_tlast        (o_err_mis_tlast),
-        .i_err_unx_tlast        (o_err_unx_tlast)
+        .i_err_unx_tlast        (o_err_unx_tlast),
 
+        .s_axil                 (s_axil),
+        .m_axil                 (m_axil)
     );
     
 endmodule
