@@ -11,9 +11,9 @@ module lab5_top(
     if_axil.s           s_axil
 );
 
-    logic   o_err_crc,        
-            o_err_mis_tlast,  
-            o_err_unx_tlast;
+    logic   w_err_crc,        
+            w_err_mis_tlast,  
+            w_err_unx_tlast;
     
     reg [7 : 0] w_len;
     
@@ -27,9 +27,9 @@ module lab5_top(
         .i_clk                  (i_clk),
         .i_rst                  (i_rst),
         .i_length               (w_len),
-        .o_err_crc              (o_err_crc),        
-        .o_err_mis_tlast        (o_err_mis_tlast),  
-        .o_err_unx_tlast        (o_err_unx_tlast)
+        .o_err_crc              (w_err_crc),        
+        .o_err_mis_tlast        (w_err_mis_tlast),  
+        .o_err_unx_tlast        (w_err_unx_tlast)
     );
 
     (* keep_hierarchy="yes" *)
@@ -39,11 +39,13 @@ module lab5_top(
         
         .i_clk                  (i_clk),
         .i_length               (i_length),
+        .i_rst                  (i_rst),
+        .i_err_crc              (w_err_crc),
+        .i_err_mis_tlast        (w_err_mis_tlast),
+        .i_err_unx_tlast        (w_err_unx_tlast),
+        
         .o_length               (w_len),
         .o_err                  (o_err),
-        .i_err_crc              (o_err_crc),
-        .i_err_mis_tlast        (o_err_mis_tlast),
-        .i_err_unx_tlast        (o_err_unx_tlast),
 
         .s_axil                 (s_axil),
         .m_axil                 (m_axil)

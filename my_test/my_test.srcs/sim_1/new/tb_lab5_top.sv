@@ -2,8 +2,8 @@
 
 module tb_lab5_top #(
 
-    int G_RM_ADDR_W = 12, // AXIL xADDR bit width
-	int G_RM_DATA_B = 8, // AXIL xDATA number of bytes (B)	
+    int G_RM_ADDR_W = 4, // AXIL xADDR bit width
+	int G_RM_DATA_B = 4, // AXIL xDATA number of bytes (B)
 	real dt = 1.0 // clock period ns
 
     );
@@ -13,19 +13,21 @@ module tb_lab5_top #(
     logic   i_rst_n = 1;
     logic   i_rst   = 0;
     logic   i_clk   = 1;
-    reg [7 : 0] w_length, w_err;
 
-    typedef logic [G_RM_ADDR_W-1:0] t_xaddr;
-	typedef logic [C_RM_DATA_W-1:0] t_xdata;
+    reg [7 : 0] 					w_length;
+	reg [C_RM_DATA_W - 1 : 0]		w_err;
+
+    typedef logic [G_RM_ADDR_W - 1 : 0] t_xaddr;
+	typedef logic [C_RM_DATA_W - 1 : 0] t_xdata;
 
     if_axil #(
-		.N(G_RM_DATA_B), 
-		.A(G_RM_ADDR_W)
+		.N		(G_RM_DATA_B), 
+		.A		(G_RM_ADDR_W)
 		) s_axil ();
 
 	if_axil #(
-		.N(G_RM_DATA_B), 
-		.A(G_RM_ADDR_W)
+		.N		(G_RM_DATA_B), 
+		.A		(G_RM_ADDR_W)
 		) m_axil ();
 
 
@@ -74,7 +76,7 @@ module tb_lab5_top #(
 
     task t_axil_rd;
 		input  t_xaddr ADDR;
-		//	output t_xdata DATA;
+		output t_xdata DATA;
 		begin
 		// read address
 			s_axil.araddr = ADDR;
@@ -82,22 +84,20 @@ module tb_lab5_top #(
 		// read data
 			s_axil.rresp = 2'b00;
 			`MACRO_AXIL_HSK(rvalid, rready);
-		//	DATA = s_axil.rdata;
+			DATA = s_axil.rdata;
 		end
 	endtask : t_axil_rd
 
-    localparam t_xaddr RW_LEN_ADDR  = 'h001; 
-	localparam t_xaddr WR_TRN_TBL   = 'h008; 
-	localparam t_xaddr RW_GLU_ENA   = 'h100; 
-	localparam t_xaddr RW_GLU_OFS   = 'h108; 
-	localparam t_xaddr RW_DWS_PRM   = 'h200; 
+    localparam t_xaddr LEN_ADDR		= 'h00; 
+	localparam t_xaddr LEN1_ADDR	= 'h02; 
+	localparam t_xaddr ERR_ADDR	 	= 'h04;  
 
     always #(dt / 2) i_clk = ~i_clk;
 
     initial begin
         i_rst   = 1;
         i_rst_n = 0; 
-        #5;
+        #2;
         i_rst   = 0;
         i_rst_n = 1;
 	end
@@ -105,9 +105,18 @@ module tb_lab5_top #(
     initial begin
 		
         t_axil_init; 
-        #10;
+        #5;
         w_length = 5;
-        t_axil_wr(.ADDR(RW_LEN_ADDR), .DATA(w_length));
+        t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length));
+		// #10;
+        // w_length = 8;
+        // t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length));
+		// w_length = 0;
+		// #10;
+		// t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
+		
+		#10;
+		t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
 
 	end
 
@@ -115,7 +124,6 @@ module tb_lab5_top #(
 
         .i_clk              (i_clk),
         .i_rst              (i_rst),
-        .i_length           (w_length),
         .i_err              (w_err),
 
         .s_axil				(s_axil),
