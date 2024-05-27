@@ -2,19 +2,21 @@
 
 module tb_lab5_top #(
 
-    int G_RM_ADDR_W = 4, // AXIL xADDR bit width
-	int G_RM_DATA_B = 4, // AXIL xDATA number of bytes (B)
-	real dt = 1.0 // clock period ns
+    int G_RM_ADDR_W = 4, 	// AXIL xADDR bit width
+	int G_RM_DATA_B = 4, 	// AXIL xDATA number of bytes (B)
+	real dt = 1.0 			// clock period ns
 
     );
 
     localparam C_RM_DATA_W = 8 * G_RM_DATA_B;
+	localparam logic ena_rst = 1;
 
-    logic   i_rst   = 0;
-    logic   i_clk   = 1;
+    logic i_rst 	= 0;
+    logic i_clk 	= 1;
 
-    reg [7 : 0] 					w_length;
-	reg [C_RM_DATA_W - 1 : 0]		w_err;
+    reg [7 : 0] 				w_length;
+	reg [2 : 0]					i_rst_pkt = '0;
+	reg [C_RM_DATA_W - 1 : 0]	w_err;
 
     typedef logic [G_RM_ADDR_W - 1 : 0] t_xaddr;
 	typedef logic [C_RM_DATA_W - 1 : 0] t_xdata;
@@ -100,6 +102,31 @@ module tb_lab5_top #(
         i_rst   = 0;
 	end
 
+	if (ena_rst) begin
+
+		always #(dt * 120) begin
+
+			i_rst_pkt[0] = 1;
+			#2 i_rst_pkt = 0;
+
+		end
+
+		always #(dt * 75) begin
+
+			i_rst_pkt[1] = 1;
+			#2 i_rst_pkt = 0;
+
+		end
+
+		always #(dt * 40) begin
+
+			i_rst_pkt[2] = 1;
+			#2 i_rst_pkt = 0;
+
+		end
+
+	end
+
     initial begin
 		
         t_axil_init;
@@ -132,7 +159,7 @@ module tb_lab5_top #(
 
         .i_clk              (i_clk),
         .i_rst              (i_rst),
-        .i_err              (w_err),
+		.i_rst_pkt			(i_rst_pkt),
 
         .s_axil				(m_axil),
 		.m_axil				(s_axil)

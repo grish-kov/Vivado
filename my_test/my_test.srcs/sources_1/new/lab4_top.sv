@@ -6,10 +6,10 @@ module lab4_top #(
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
 ) (
-    input wire          i_rst,
-          wire          i_clk,
+    input wire          i_clk,
                         i_reset,
-          reg [7:0]     i_length,
+          reg [7 : 0]   i_length,
+          reg [2 : 0]   i_rst,
     output wire         o_err_crc,        
                         o_err_mis_tlast,  
                         o_err_unx_tlast
@@ -24,7 +24,7 @@ module lab4_top #(
         .G_P_LEN                (G_P_LEN)
     ) u_source (
         .i_clk                  (i_clk),
-        .i_rst                  (i_rst),
+        .i_rst                  (i_rst[0]),
         .i_len                  (i_length),
         .m_axis                 (mst_fifo)
         );
@@ -42,20 +42,12 @@ module lab4_top #(
         .s_axis_a_clk_p         (i_clk),
         .m_axis_a_clk_p         (i_clk),
 
-        .s_axis_a_rst_n         (!i_rst),
-        .m_axis_a_rst_n         (!i_rst),
+        .s_axis_a_rst_n         (!i_rst[1]),
+        .m_axis_a_rst_n         (!i_rst[1]),
         .i_fifo_a_rst_n         (!i_reset),
 
         .s_axis                 (mst_fifo),
         .m_axis                 (slv_fifo)
-
-        // .o_fifo_a_tfull         (o_fifo_a_tfull),
-        // .o_fifo_p_tfull         (o_fifo_p_tfull),
-        // .o_fifo_w_count         (o_fifo_w_count),
-        
-        // .o_fifo_a_empty         (o_fifo_a_empty),
-        // .o_fifo_p_empty         (o_fifo_p_empty),
-        // .o_fifo_r_count         (o_fifo_r_count)
         );
     
     // Initiating sink module
@@ -64,7 +56,7 @@ module lab4_top #(
         .G_P_LEN                (G_P_LEN)
     ) u_sink (
         .i_clk                  (i_clk),   
-        .i_rst                  (i_rst),
+        .i_rst                  (i_rst[2]),
         .s_axis                 (slv_fifo),
         .o_err_crc              (o_err_crc),
         .o_err_mis_tlast        (o_err_mis_tlast),

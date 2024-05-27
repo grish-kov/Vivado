@@ -2,19 +2,18 @@
 
 module lab5_reg_map # (
 
-    int G_RM_ADDR_W = 4, // AXIL xADDR bit width
-	int G_RM_DATA_B = 4 // AXIL xDATA number of bytes (B)
+    int G_RM_ADDR_W = 4,    // AXIL xADDR bit width
+	int G_RM_DATA_B = 4     // AXIL xDATA number of bytes (B)
 
 )(
-    input logic             i_err_crc,        
-                            i_err_mis_tlast,  
-                            i_err_unx_tlast,
-                            i_clk,
-                            i_rst,
-    input reg   [(G_RM_DATA_B * 8) - 1 : 0] i_length,
+    input logic     i_err_crc,        
+                    i_err_mis_tlast,  
+                    i_err_unx_tlast,
+                    i_clk,
+                    i_rst,
 
-    output reg  [(G_RM_DATA_B * 8) - 1 : 0] o_length,
-                [(G_RM_DATA_B * 8) - 1 : 0] o_err,
+    output reg [(G_RM_DATA_B * 8) - 1 : 0]  o_length,
+                                            o_err,
 
     if_axil.s   s_axil,
     if_axil.m   m_axil
@@ -36,24 +35,12 @@ module lab5_reg_map # (
 
     reg [7 : 0] w_len = '0;
 
-    typedef enum{
+    assign o_length = w_len;
 
-        S0,     
-        S1,
-        S2,
-        S3
-        
-    } t_fsm_s;
-
-    t_fsm_s q_crnt_s = S0;
-
-    assign o_length         = w_len;
-    // assign RG_STAT[0]       = i_err_crc;
-    // assign RG_STAT[8]       = i_err_mis_tlast;
-    // assign RG_STAT[16]      = i_err_unx_tlast;
-
-    assign RG_STAT = '{0 : i_err_crc, 8 : i_err_mis_tlast, 16 : i_err_unx_tlast,
-                        default : 0};
+    assign RG_STAT = '{ 0       : i_err_crc, 
+                        8       : i_err_mis_tlast, 
+                        16      : i_err_unx_tlast,
+                        default : 0 };
 
     task t_axil_init; 
         begin
@@ -72,7 +59,7 @@ module lab5_reg_map # (
     task t_axil_rd;
         output t_xaddr ADDR;
         output t_xdata DATA;
-            begin
+        begin
             
             ADDR            <= s_axil.awaddr;
             s_axil.awready  <= 1;
@@ -188,7 +175,7 @@ module lab5_reg_map # (
                     s_axil.rdata <= RG_STAT;
 
                 default : 
-                
+
                     s_axil.rdata <= '1;
 
             endcase
