@@ -84,7 +84,7 @@ module tb_lab5_top #(
 		end
 	endtask : t_axil_rd
 
-    localparam t_xaddr LEN_ADDR		= 'h00; 
+    localparam t_xaddr LEN_ADDR		= 'h01; 
 	localparam t_xaddr LEN1_ADDR	= 'h02; 
 	localparam t_xaddr WRNG_ADDR 	= 'h03;  
 	localparam t_xaddr ERR_ADDR	 	= 'h04;  
@@ -122,42 +122,32 @@ module tb_lab5_top #(
 
 	end
 
-	// initial begin
-
-	// 	#5 t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
-
-	// end
-
     initial begin
 		
         t_axil_init;
-
-        #5;
-        w_length = 5;
+		w_length = 8;
+		#5;
+        
         t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length));
-		t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
-		#5;
-		t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length + 1));
-		t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
-		#5;
-		t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length + 2));
-		t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
-		#5;
-		t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length + 3));
-		t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
+		w_length = 5;
+		#10;
+		
+        t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length));
+		
+		w_length = 33;
+		#10;
+		
+        t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length));
 
 		#10;
-        w_length = 8;
-        t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length));
-		t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_err));
-
+		t_axil_rd(.ADDR(WRNG_ADDR), .DATA(w_err));
+		
 		w_length = 0;
 
 		#10;
 		t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
 
-		#10;
-		t_axil_rd(.ADDR(WRNG_ADDR), .DATA(w_err));
+	
 
 	end
 
