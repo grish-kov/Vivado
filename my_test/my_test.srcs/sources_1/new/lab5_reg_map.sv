@@ -54,55 +54,7 @@ module lab5_reg_map # (
         end
     endtask : t_axil_init
     
-    task t_axil_rd;
-        output t_xaddr ADDR;
-        output t_xdata DATA;
-        begin
-            
-            ADDR            <= s_axil.awaddr;
-            s_axil.awready  <= 1;
-
-            DATA            <= s_axil.wdata;
-            s_axil.wready   <= 1;
-
-            s_axil.bresp    <= '0;
-            s_axil.bvalid   <= 1;
-
-        end
-    endtask : t_axil_rd
-
-    task t_axil_wr;
-        output t_xaddr ADDR;
-		begin
-
-			ADDR            <= s_axil.araddr;
-
-			s_axil.arready  <= 1;
-            s_axil.rvalid   <= 1;
-
-            case(ADDR)
-
-                LEN_ADDR :
-                    s_axil.rdata = RG_LEN [7 : 0];
-
-                LEN1_ADDR :
-                    s_axil.rdata = RG_LEN [15 : 8];
-
-                ERR_ADDR :
-                    s_axil.rdata = RG_STAT;
-
-                default : 
-                    s_axil.rdata = '1;
-
-            endcase
-			
-
-		end
-    endtask : t_axil_wr
-    
     always_ff @(posedge i_clk) begin
-
-        // t_axil_rd(.ADDR(ADDR),.DATA(w_len));
 
         s_axil.awready <= 1;
 
@@ -139,11 +91,9 @@ module lab5_reg_map # (
 
             LEN1_ADDR : 
 
-                RG_LEN [15 : 8] = w_len;
+                RG_LEN [31 : 24] = w_len;
 
         endcase
-    
-        // t_axil_wr(.ADDR(ADDR));
 
         s_axil.arready <= 1;
 
@@ -166,7 +116,7 @@ module lab5_reg_map # (
 
                 LEN1_ADDR :
 
-                    s_axil.rdata <= RG_LEN [15 : 8];
+                    s_axil.rdata <= RG_LEN [31 : 24];
 
                 ERR_ADDR :
 
