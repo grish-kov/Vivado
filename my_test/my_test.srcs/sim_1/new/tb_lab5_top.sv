@@ -21,11 +21,6 @@ module tb_lab5_top #(
     typedef logic [G_RM_ADDR_W - 1 : 0] t_xaddr;
 	typedef logic [C_RM_DATA_W - 1 : 0] t_xdata;
 
-    if_axil #(
-		.N		(G_RM_DATA_B), 
-		.A		(G_RM_ADDR_W)
-		) s_axil ();
-
 	if_axil #(
 		.N		(G_RM_DATA_B), 
 		.A		(G_RM_ADDR_W)
@@ -161,8 +156,7 @@ module tb_lab5_top #(
         .i_rst              (i_rst),
 		.i_rst_pkt			(i_rst_pkt),
 
-        .s_axil				(m_axil),
-		.m_axil				(s_axil)
+        .s_axil				(m_axil)
     );
 
 endmodule

@@ -6,7 +6,6 @@ module lab5_top(
     input               i_clk,
                         i_rst,
 
-    if_axil.m           m_axil,
     if_axil.s           s_axil
 );
 
@@ -22,7 +21,7 @@ module lab5_top(
         .i_clk                  (i_clk),
         .i_rst                  (i_rst_pkt),
         .i_length               (w_len),
-        
+
         .o_err_crc              (w_err_crc),        
         .o_err_mis_tlast        (w_err_mis_tlast),  
         .o_err_unx_tlast        (w_err_unx_tlast)
@@ -40,8 +39,7 @@ module lab5_top(
         .o_length               (w_len),
         .o_err                  (o_err),
 
-        .s_axil                 (s_axil),
-        .m_axil                 (m_axil)
+        .s_axil                 (s_axil)
     );
     
 endmodule

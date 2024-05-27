@@ -15,9 +15,7 @@ module lab5_reg_map # (
     output reg [(G_RM_DATA_B * 8) - 1 : 0]  o_length,
                                             o_err,
 
-    if_axil.s   s_axil,
-    if_axil.m   m_axil
-    
+    if_axil.s   s_axil
     );
 
     localparam C_RM_DATA_W = 8 * G_RM_DATA_B;
