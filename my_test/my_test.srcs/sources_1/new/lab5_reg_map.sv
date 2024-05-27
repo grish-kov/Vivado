@@ -74,17 +74,19 @@ module lab5_reg_map # (
 
         end 
 
-        case(ADDR)
+        if (!s_axil. wready)
 
-            LEN_ADDR :
+            case(ADDR)
 
-                RG_LEN [7 : 0] <= w_len;
+                LEN_ADDR :
 
-            LEN1_ADDR : 
+                    RG_LEN [7 : 0] <= w_len;
 
-                RG_LEN [31 : 24] <= w_len;
+                LEN1_ADDR : 
 
-        endcase
+                    RG_LEN [31 : 24] <= w_len;
+
+            endcase
 
         s_axil.bvalid <= 0;
 
