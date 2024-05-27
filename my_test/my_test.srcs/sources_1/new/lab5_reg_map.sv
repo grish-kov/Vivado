@@ -48,9 +48,12 @@ module lab5_reg_map # (
     t_fsm_s q_crnt_s = S0;
 
     assign o_length         = w_len;
-    assign RG_STAT[0]       = i_err_crc;
-    assign RG_STAT[8]       = i_err_mis_tlast;
-    assign RG_STAT[16]      = i_err_unx_tlast;
+    // assign RG_STAT[0]       = i_err_crc;
+    // assign RG_STAT[8]       = i_err_mis_tlast;
+    // assign RG_STAT[16]      = i_err_unx_tlast;
+
+    assign RG_STAT = '{0 : i_err_crc, 8 : i_err_mis_tlast, 16 : i_err_unx_tlast,
+                        default : 0};
 
     task t_axil_init; 
         begin
@@ -66,23 +69,19 @@ module lab5_reg_map # (
         end
     endtask : t_axil_init
     
-    `define MACRO_AXIL_HSK(miso, mosi) \
-        if ((s_axil.``miso`` && s_axil.``mosi``)) \
-            s_axil.``miso`` = '0; \
-        else  \
-            s_axil.``miso`` = '1; \
-    
     task t_axil_rd;
         output t_xaddr ADDR;
         output t_xdata DATA;
             begin
             
-            ADDR = s_axil.awaddr;
-            `MACRO_AXIL_HSK(awready, awvalid);
-            DATA = s_axil.wdata;
-            `MACRO_AXIL_HSK(wready, wvalid);
-            s_axil.bresp = '0;
-            `MACRO_AXIL_HSK(bvalid, bready);
+            ADDR            <= s_axil.awaddr;
+            s_axil.awready  <= 1;
+
+            DATA            <= s_axil.wdata;
+            s_axil.wready   <= 1;
+
+            s_axil.bresp    <= '0;
+            s_axil.bvalid   <= 1;
 
         end
     endtask : t_axil_rd
@@ -91,9 +90,11 @@ module lab5_reg_map # (
         output t_xaddr ADDR;
 		begin
 
-			ADDR = s_axil.araddr;
-			`MACRO_AXIL_HSK(arready, arvalid);
-            `MACRO_AXIL_HSK(rvalid, rready);
+			ADDR            <= s_axil.araddr;
+
+			s_axil.arready  <= 1;
+            s_axil.rvalid   <= 1;
+
             case(ADDR)
 
                 LEN_ADDR :
@@ -116,7 +117,34 @@ module lab5_reg_map # (
     
     always_ff @(posedge i_clk) begin
 
-        t_axil_rd(.ADDR(ADDR),.DATA(w_len));
+        // t_axil_rd(.ADDR(ADDR),.DATA(w_len));
+
+        s_axil.awready <= 1;
+
+        if (s_axil.awready & s_axil.awvalid) begin
+
+            ADDR            <= s_axil.awaddr;
+            s_axil.awready  <= 0;
+
+        end
+
+        s_axil.wready <= 1;
+
+        if (s_axil.wready & s_axil.wvalid) begin
+
+            w_len           <= s_axil.wdata;
+            s_axil.wready   <= 0;
+
+        end 
+
+        s_axil.bvalid <= 1;
+
+        if (s_axil.bvalid & s_axil.bready) begin
+
+            s_axil.bresp    <= '0;
+            s_axil.bvalid   <=  0;
+
+        end 
 
         case(ADDR)
 
@@ -130,7 +158,44 @@ module lab5_reg_map # (
 
         endcase
     
-        t_axil_wr(.ADDR(ADDR));
+        // t_axil_wr(.ADDR(ADDR));
+
+        s_axil.arready <= 1;
+
+        if (s_axil.arready & s_axil.arvalid) begin
+
+            ADDR            <= s_axil.araddr;
+            s_axil.arready  <= 0;
+
+        end 
+
+        s_axil.rvalid <= 1;
+
+        if (s_axil.rvalid & s_axil.rready) begin
+
+            case(ADDR)
+
+                LEN_ADDR :
+
+                    s_axil.rdata <= RG_LEN [7 : 0];
+
+                LEN1_ADDR :
+
+                    s_axil.rdata <= RG_LEN [15 : 8];
+
+                ERR_ADDR :
+
+                    s_axil.rdata <= RG_STAT;
+
+                default : 
+                
+                    s_axil.rdata <= '1;
+
+            endcase
+
+            s_axil.rvalid <= 0;
+
+        end
 
         if (i_rst) 
             t_axil_init;
