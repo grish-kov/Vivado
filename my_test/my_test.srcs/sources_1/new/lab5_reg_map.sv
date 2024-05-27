@@ -23,12 +23,12 @@ module lab5_reg_map # (
     typedef logic [G_RM_ADDR_W - 1 : 0] t_xaddr;
 	typedef logic [C_RM_DATA_W - 1 : 0] t_xdata;
 
-    localparam t_xaddr LEN_ADDR	    = 'h00; 
+    localparam t_xaddr LEN_ADDR	    = 'h01; 
     localparam t_xaddr LEN1_ADDR	= 'h02;
 	localparam t_xaddr ERR_ADDR     = 'h04;
     t_xaddr ADDR;  
     
-    reg [31 : 0]    RG_LEN,
+    reg [31 : 0]    RG_LEN = '0,
                     RG_STAT;
 
     reg [7 : 0] w_len = '0;
@@ -74,26 +74,26 @@ module lab5_reg_map # (
 
         end 
 
-        s_axil.bvalid <= 1;
-
-        if (s_axil.bvalid & s_axil.bready) begin
-
-            s_axil.bresp    <= '0;
-            s_axil.bvalid   <=  0;
-
-        end 
-
         case(ADDR)
 
             LEN_ADDR :
 
-                RG_LEN [7 : 0] = w_len;
+                RG_LEN [7 : 0] <= w_len;
 
             LEN1_ADDR : 
 
-                RG_LEN [31 : 24] = w_len;
+                RG_LEN [31 : 24] <= w_len;
 
         endcase
+
+        s_axil.bvalid <= 0;
+
+        if (!s_axil.bvalid & s_axil.bready) begin
+
+            s_axil.bresp    <= '0;
+            s_axil.bvalid   <=  1;
+
+        end
 
         s_axil.arready <= 1;
 
