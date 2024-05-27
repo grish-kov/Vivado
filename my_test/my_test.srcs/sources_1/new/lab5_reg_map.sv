@@ -33,7 +33,7 @@ module lab5_reg_map # (
 
     reg [7 : 0] w_len = '0;
 
-    assign o_length = w_len;
+    assign o_length = RG_LEN [7 : 0];
 
     assign RG_STAT = '{ 0       : i_err_crc, 
                         8       : i_err_mis_tlast, 
