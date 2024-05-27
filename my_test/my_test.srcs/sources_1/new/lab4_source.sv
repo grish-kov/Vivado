@@ -5,28 +5,28 @@ module lab4_source #(
                     G_BYT       = 1,                              // Amout of byte in data
                     G_BIT_WIDTH = 8 * G_BYT,                      // Amout of bit in data
                     G_CNT_WIDTH = ($ceil($clog2(G_P_LEN + 1)))    // Counter width
-) (
-    input               i_clk,
-                        i_rst,      // Reset, active - high
-    [G_CNT_WIDTH : 0]   i_len,       // Input packet length
+) (     
+    input                   i_clk,
+                            i_rst,      // Reset, active - high
+    [G_BIT_WIDTH - 1 : 0]   i_len,       // Input packet length
     
     if_axis.m   m_axis
 );
 
-    logic   [G_BIT_WIDTH - 1 : 0] o_crc_res = '0;               // Result of calculated CRC
-    logic   [G_BIT_WIDTH - 1 : 0] i_crc_wrd = '0;               // Input for CRC
+    reg     [G_BIT_WIDTH - 1 : 0] o_crc_res;                    // Result of calculated CRC
 
-    logic   [G_CNT_WIDTH : 0] buf_len       = '0;               // Packet length buffer
+    reg     [G_CNT_WIDTH : 0] buf_len       = '0;               // Packet length buffer
 
     reg     [G_CNT_WIDTH : 0] q_cnt         = 0;                // Data counter
+    reg     [G_CNT_WIDTH : 0] q_cnt_idle    = 0;                // Data counter
 
     logic   q_vld       = 0;                                    // Validity of data for CRC
     logic   m_crc_rst   = 0;                                    // Reset for CRC, active - high
 
     typedef enum{
 
-        S0 = 0,     // Init. state
-        S1 = 1      // Payload to FIFO
+        S0,     // Init. state
+        S1      // Payload to FIFO
         
     } t_fsm_s;
 
@@ -40,6 +40,22 @@ module lab4_source #(
 
     end
     
+    always_comb begin
+
+        w_nxt_s = q_crnt_s; 
+
+        case (q_crnt_s)
+
+            S0 : w_nxt_s = S1;
+
+            S1 : if (m_axis.tlast) w_nxt_s = S0; 
+
+            default: w_nxt_s = S0;
+
+        endcase
+
+    end
+
     always_ff @(posedge i_clk) begin
 
         if (i_len > 0) 
@@ -51,57 +67,57 @@ module lab4_source #(
         
             S0 : begin 
 
-                m_axis.tvalid   = 0;
-                m_axis.tlast    = 0;
-                m_crc_rst       = 1;
-                q_vld           = 0;
+                m_axis.tvalid   <= 0;
+                m_axis.tlast    <= 0;
+                m_axis.tdata    <= '0;
+                m_crc_rst       <= 1;
+                q_vld           <= 0;
 
             end
             
             S1 : begin 
 
-                if (!m_axis.tvalid) begin
-                    
-                    m_axis.tvalid   = 1;
-                    m_crc_rst       = 0;
+                m_crc_rst       <= 0;
+                
+                if (!m_axis.tvalid)
+                    m_axis.tvalid   <= 1;
 
-                end
-            
-                case (q_cnt)
+                if (m_axis.tready)
 
-                    0: ;
+                    case (q_cnt)
 
-                    1 :
-                        m_axis.tdata    = 72;
-  
+                        0: ;
 
-                    2 :
-                        m_axis.tdata    = buf_len;
-                    
-                    buf_len + 3 : begin
+                        1 :
+                            m_axis.tdata    <= 72;
+
+                        2 :
+
+                            m_axis.tdata    <= buf_len;
                         
-                        q_vld           = 0;
-                        m_axis.tvalid   = 0;
+                        buf_len + 3 : begin
+                            
+                            q_vld           <= 0;
+                            m_axis.tvalid   <= 0;
 
-                    end
+                        end
+                        
+                        buf_len + 4 : begin
 
-                    buf_len + 4 : begin
+                            m_axis.tvalid   <= 1;
+                            m_axis.tlast    <= 1;
+                            m_axis.tdata    <= o_crc_res;
+                            
+                        end
 
-                        m_axis.tvalid   = 1;
-                        m_axis.tlast    = 1;
-                        m_axis.tdata    = o_crc_res;
+                        default : begin
+                        
+                            q_vld           <= 1;
+                            m_axis.tdata    <= q_cnt - 2;
 
-                    end
-
-                    default : begin
-
-                        q_vld           = 1;
-                        m_axis.tdata    = q_cnt - 2;
-
-                    end
-
-                endcase
-
+                        end
+                        
+                    endcase
             end
 
             default : ;
@@ -112,142 +128,20 @@ module lab4_source #(
 
     always_ff @(posedge i_clk) begin
 
-        if (q_cnt < buf_len + 4) 
-            q_cnt <= q_cnt + 1;
+        if ((q_cnt < buf_len + 4) & m_axis.tready) 
+            q_cnt   <= q_cnt + 1;
 
         if (q_cnt == buf_len + 4)
-            q_cnt <= 0; 
+            q_cnt   <= 0; 
 
     end
 
     always_ff @(posedge i_clk)
         
-        if (i_rst) begin
-        
-            m_axis.tdata    <= '0;
-            m_crc_rst       <=  1;
-            q_cnt           <=  0; 
-            q_crnt_s        <= S0;
-        
-        end
+        if (i_rst)
+            q_crnt_s    <= S0;
         else
-            q_crnt_s <= w_nxt_s;
- 
-
-    always_comb begin
-
-        w_nxt_s = q_crnt_s; 
-
-        case (q_crnt_s)
-
-            S0: w_nxt_s = S1;
-
-            S1: if (m_axis.tlast) w_nxt_s = S0; 
-
-            default: w_nxt_s = S0;
-
-        endcase
-
-    end
-    /*always_ff @(posedge i_clk) begin
-    
-        if (i_len > 0) 
-            buf_len = i_len;
-
-        if (i_rst) begin
-
-            m_axis.tvalid   <= '0;
-            m_axis.tlast    <= '0;
-            m_axis.tdata    <= '0;
-            q_vld           <= 0;
-            m_crc_rst       <= 1;
-            q_crnt_s        <= S0;
-
-        end else
-        case (q_crnt_s) 
-
-            S0 : begin
-                
-                m_axis.tvalid   <= 0;
-                m_axis.tlast    <= 0;
-                m_crc_rst       <= 0;
-                q_vld           <= 0;
-                q_shr           <= '{0, 0, 1}; 
-                q_crnt_s        <= S1;
-
-            end
-
-            S1 : begin
-                
-                if (!m_axis.tvalid)
-                    m_axis.tvalid <= 1;
-
-                if (m_axis.tvalid & m_axis.tready)
-                    q_shr <= {q_shr [1:2], q_cnt};
-
-                if (q_cnt < buf_len + 4) 
-                    q_cnt <= q_cnt + 1;
-                
-                if (q_cnt == buf_len + 4) begin
-                    
-                    q_vld           <= 0;
-                    m_axis.tlast    <= 1;
-                    m_crc_rst       <= 1;
-                    q_cnt           <= 1;
-                    q_crnt_s        <= S0;  
-
-                end
-
-                case (q_cnt)
-
-                    1 : begin
-
-                        m_axis.tdata    <= 72;
-                        q_cnt           <= q_cnt + 1;
-
-                    end 
-
-                    2 : begin
-
-                        m_axis.tdata    <= buf_len;
-                        q_cnt           <= q_cnt + 1;
-
-                    end
-
-                    buf_len + 3: begin
-
-                        q_vld           <= 0; 
-                        m_axis.tvalid   <= 0;
-                        q_cnt           <= q_cnt + 1;
-
-                    end
-
-                    buf_len + 4 : begin 
-
-                        m_axis.tvalid   <= 1;
-                        m_axis.tdata    <= o_crc_res;
-
-                    end
-
-                    default : begin 
-                        
-                        q_vld           <= 1;
-                        i_crc_wrd       <= q_shr[0] + 1;  
-                        m_axis.tdata    <= q_shr[0] + 1;   
-                        
-                    end
-
-                endcase
-            
-            end
-            
-            default : q_crnt_s <= S0;
-
-        endcase
-
-    end
-    */
-
+            q_crnt_s    <= w_nxt_s;
 
     CRC #(
 		.POLY_WIDTH         (G_BIT_WIDTH),  // Size of The Polynomial Vector
@@ -267,7 +161,7 @@ module lab4_source #(
 		.i_crc_ini_dat      ('0),           // Input Initial Value
 		.i_crc_wrd_vld      (q_vld),        // Word Data Valid Flag 
 		.o_crc_wrd_rdy      (),             // Ready To Recieve Word Data
-		.i_crc_wrd_dat      (m_axis.tdata),    // Word Data
+		.i_crc_wrd_dat      (m_axis.tdata), // Word Data
 		.o_crc_res_vld      (),             // Output Flag of Validity, Active High for Each WORD_COUNT Number
 		.o_crc_res_dat      (o_crc_res)     // Output CRC from Each Input Word
 	);
