@@ -104,9 +104,9 @@ module lab5_reg_map # (
 
         end 
 
-        s_axil.rvalid <= 1;
+        s_axil.rvalid <= 0;
 
-        if (s_axil.rvalid & s_axil.rready) begin
+        if (!s_axil.rvalid & s_axil.rready) begin
 
             case(ADDR)
 
@@ -128,7 +128,7 @@ module lab5_reg_map # (
 
             endcase
 
-            s_axil.rvalid <= 0;
+            s_axil.rvalid <= 1;
 
         end
 
