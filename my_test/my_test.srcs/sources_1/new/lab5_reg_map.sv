@@ -26,12 +26,16 @@ module lab5_reg_map # (
     localparam t_xaddr LEN_ADDR	    = 'h01; 
     localparam t_xaddr LEN1_ADDR	= 'h02;
 	localparam t_xaddr ERR_ADDR     = 'h04;
+    localparam t_xaddr TST_ADDR	 	= 'h05;   
     t_xaddr ADDR;  
     
     reg [31 : 0]    RG_LEN = '0,
                     RG_STAT;
 
-    reg [7 : 0] w_len = '0;
+    reg [7 : 0] q_data = '0;
+
+    logic q_wena = 1;    
+    
 
     assign o_length = RG_LEN [7 : 0];
 
@@ -43,13 +47,14 @@ module lab5_reg_map # (
     task t_axil_init; 
         begin
 
-            s_axil.awready = 0;
-            s_axil.wready  = 0;
-            s_axil.bvalid  = 0;
-            s_axil.arready = 0;
-            s_axil.rvalid  = 0;
-            s_axil.bvalid  = 0;
-            s_axil.bresp   = 0;
+            s_axil.awready  = 0;
+            s_axil.wready   = 0;
+            s_axil.bvalid   = 0;
+            s_axil.arready  = 0;
+            s_axil.rvalid   = 0;
+            s_axil.bvalid   = 0;
+            s_axil.bresp    = 0;
+            q_wena          = 0;
 
         end
     endtask : t_axil_init
@@ -65,26 +70,34 @@ module lab5_reg_map # (
 
         end
 
+        q_wena <= s_axil.wready & s_axil.wvalid;
+
         s_axil.wready <= 1;
 
         if (s_axil.wready & s_axil.wvalid) begin
 
-            w_len           <= s_axil.wdata;
+            q_data          <= s_axil.wdata;            
             s_axil.wready   <= 0;
 
         end 
 
-        if (!s_axil. wready)
+        if (q_wena) 
 
             case(ADDR)
 
                 LEN_ADDR :
 
-                    RG_LEN [7 : 0] <= w_len;
+                    RG_LEN [7 : 0] <= q_data;
 
                 LEN1_ADDR : 
 
-                    RG_LEN [31 : 24] <= w_len;
+                    RG_LEN [31 : 24] <= q_data;
+
+                TST_ADDR : begin
+
+                    RG_LEN [7:0] <= q_data;
+
+                end
 
             endcase
 
