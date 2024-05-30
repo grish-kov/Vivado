@@ -27,7 +27,7 @@ module lab5_reg_map # (
     localparam t_xaddr LEN1_ADDR	= 'h02;
 	localparam t_xaddr ERR_ADDR     = 'h04;
     localparam t_xaddr TST_ADDR	 	= 'h05;   
-    t_xaddr ADDR;  
+    t_xaddr WADDR, RADDR;  
     
     reg [31 : 0]    RG_LEN = '0,
                     RG_STAT;
@@ -65,7 +65,7 @@ module lab5_reg_map # (
 
         if (s_axil.awready & s_axil.awvalid) begin
 
-            ADDR            <= s_axil.awaddr;
+            RADDR            <= s_axil.awaddr;
             s_axil.awready  <= 0;
 
         end
@@ -83,7 +83,7 @@ module lab5_reg_map # (
 
         if (q_wena) 
 
-            case(ADDR)
+            case(RADDR)
 
                 LEN_ADDR :
 
@@ -114,7 +114,7 @@ module lab5_reg_map # (
 
         if (s_axil.arready & s_axil.arvalid) begin
 
-            ADDR            <= s_axil.araddr;
+            WADDR            <= s_axil.araddr;
             s_axil.arready  <= 0;
 
         end 
@@ -123,7 +123,7 @@ module lab5_reg_map # (
 
         if (!s_axil.rvalid & s_axil.rready) begin
 
-            case(ADDR)
+            case(WADDR)
 
                 LEN_ADDR :
 
