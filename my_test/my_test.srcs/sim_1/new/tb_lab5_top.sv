@@ -179,28 +179,31 @@ module tb_lab5_top #(
 
 	initial begin
 
-		#5;
-		t_axil_wr_no_data(.ADDR(LEN_ADDR));
-		#5;
-		t_axil_wr_no_data(.ADDR(TST_ADDR));
+		#1;
+		t_axil_wr(.ADDR(LEN1_ADDR), .DATA(66));
+
+		// #1;
+		// t_axil_wr_no_data(.ADDR(LEN_ADDR));
+		// #1;
+		// t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
+		// #5;
+		// t_axil_wr_no_data(.ADDR(TST_ADDR));
 
 	end
 
     initial begin
 		
-        t_axil_init;		
-		#5;
-
+        t_axil_init;
+		#6;
 		t_axil_wr_no_addr(.DATA('h7));
-		#5;
-
-		t_axil_wr_no_addr(.DATA('h98));
-
-		#10;
-		t_axil_wr_no_addr(.DATA('h98));
-		#5;
 		
-		t_axil_wr(.ADDR(LEN1_ADDR), .DATA('h23));
+		#5;
+		t_axil_wr_no_data(.ADDR(WRNG_ADDR));
+		#1;
+		t_axil_wr_no_data(.ADDR(LEN1_ADDR));
+		#1;
+		t_axil_wr_no_addr(.DATA('h7));
+		
 	end
 
     lab5_top u_uut(

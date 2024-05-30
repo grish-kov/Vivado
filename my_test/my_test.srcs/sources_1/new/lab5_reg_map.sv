@@ -34,7 +34,7 @@ module lab5_reg_map # (
 
     reg [7 : 0] q_data = '0;
 
-    logic q_wena = 1;    
+    logic q_wena = 0, q_wdena = 0;    
     
 
     assign o_length = RG_LEN [7 : 0];
@@ -66,22 +66,23 @@ module lab5_reg_map # (
         if (s_axil.awready & s_axil.awvalid) begin
 
             RADDR            <= s_axil.awaddr;
+            q_wena          <= 1;
             s_axil.awready  <= 0;
 
         end
 
-        q_wena <= s_axil.wready & s_axil.wvalid;
-
         s_axil.wready <= 1;
 
-        if (s_axil.wready & s_axil.wvalid) begin
+        if (s_axil.wready & s_axil.wvalid &  q_wena) begin
 
-            q_data          <= s_axil.wdata;            
+            q_data          <= s_axil.wdata;
+            q_wdena         <= 1;       
+            q_wena          <= 0;     
             s_axil.wready   <= 0;
 
         end 
 
-        if (q_wena) 
+        if (q_wdena) begin
 
             case(RADDR)
 
@@ -100,6 +101,10 @@ module lab5_reg_map # (
                 end
 
             endcase
+
+            q_wdena <= 0;
+
+        end
 
         s_axil.bvalid <= 0;
 
