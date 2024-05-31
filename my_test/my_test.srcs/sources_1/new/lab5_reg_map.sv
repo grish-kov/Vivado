@@ -34,7 +34,9 @@ module lab5_reg_map # (
 
     reg [7 : 0] q_data = '0;
 
-    logic q_wena = 0, q_wdena = 0;    
+    logic   q_wena  = 0,
+            q_rena  = 0,  
+            q_wdena = 0;    
     
 
     assign o_length = RG_LEN [7 : 0];
@@ -94,39 +96,41 @@ module lab5_reg_map # (
 
                     RG_LEN [31 : 24] <= q_data;
 
-                TST_ADDR : begin
+                TST_ADDR : 
 
-                    RG_LEN [7:0] <= q_data;
+                    RG_LEN [15 : 8] <= q_data;
 
-                end
+                default : 
+
+                    RG_LEN [23 : 16] <= q_data;
 
             endcase
 
             q_wdena <= 0;
+            s_axil.bvalid <= 1;
 
         end
 
-        s_axil.bvalid <= 0;
+        if (s_axil.bvalid & s_axil.bready) begin
 
-        if (!s_axil.bvalid & s_axil.bready) begin
+                s_axil.bresp    <= '0;
+                s_axil.bvalid   <=  0;
 
-            s_axil.bresp    <= '0;
-            s_axil.bvalid   <=  1;
-
-        end
+            end
 
         s_axil.arready <= 1;
 
         if (s_axil.arready & s_axil.arvalid) begin
 
-            WADDR            <= s_axil.araddr;
+            WADDR           <= s_axil.araddr;
             s_axil.arready  <= 0;
+            q_rena          <= 1;
 
         end 
 
-        s_axil.rvalid <= 0;
+        s_axil.rvalid <= 1;
 
-        if (!s_axil.rvalid & s_axil.rready) begin
+        if (s_axil.rvalid & s_axil.rready) begin
 
             case(WADDR)
 
@@ -142,13 +146,18 @@ module lab5_reg_map # (
 
                     s_axil.rdata <= RG_STAT;
 
+                TST_ADDR : 
+
+                    s_axil.rdata <= RG_LEN [15 : 8];
+
                 default : 
 
-                    s_axil.rdata <= '1;
+                    s_axil.rdata <= '0;
 
             endcase
 
-            s_axil.rvalid <= 1;
+            s_axil.rvalid   <= 0;
+            q_rena          <= 0;
 
         end
 

@@ -11,7 +11,8 @@ module tb_lab5_top #(
     localparam C_RM_DATA_W = 8 * G_RM_DATA_B;
 	localparam logic ena_rst = 1;
 
-    logic i_rst 	= 0;
+    logic i_rst, i_rst_n;
+
     logic i_clk 	= 1;
 
     reg [7 : 0] 				w_length;
@@ -148,7 +149,9 @@ module tb_lab5_top #(
 
     initial begin
         i_rst   = 1; 
+		i_rst_n = 0;
         #2;
+		i_rst_n = 1;
         i_rst   = 0;
 	end
 
@@ -179,38 +182,44 @@ module tb_lab5_top #(
 
 	initial begin
 
-		#1;
-		t_axil_wr(.ADDR(LEN1_ADDR), .DATA(66));
+		t_axil_init;
+		w_length = 16;
 
-		// #1;
-		// t_axil_wr_no_data(.ADDR(LEN_ADDR));
-		// #1;
+		#5;
+		t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length));
+		// #5;
+		// t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length + 3));
+		// #5;
+		// t_axil_wr(.ADDR(TST_ADDR), .DATA(w_length + 7));
+		// #5;
+		// t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length + 11));
+		// #5;
+		// t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length - 10));
+
+
+		#5;
+		t_axil_rd(.ADDR(LEN1_ADDR), .DATA(w_length));
+		// #5;
 		// t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
 		// #5;
-		// t_axil_wr_no_data(.ADDR(TST_ADDR));
+		// t_axil_rd(.ADDR(TST_ADDR), .DATA(w_length));
+		// #5;
+		// t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_length));
+		// #5;
+		// t_axil_rd(.ADDR(WRNG_ADDR), .DATA(w_length));
 
 	end
 
-    initial begin
-		
-        t_axil_init;
-		#6;
-		t_axil_wr_no_addr(.DATA('h7));
-		
-		#5;
-		t_axil_wr_no_data(.ADDR(WRNG_ADDR));
-		#1;
-		t_axil_wr_no_data(.ADDR(LEN1_ADDR));
-		#1;
-		t_axil_wr_no_addr(.DATA('h7));
-		
-	end
+    lab5_top #(
 
-    lab5_top u_uut(
+		.ENA_FIFO 			("False")
+
+ 	) u_uut(
 
         .i_clk              (i_clk),
         .i_rst              (i_rst),
 		.i_rst_pkt			(i_rst_pkt),
+		.i_rst_n			(i_rst_n),
 
         .s_axil				(m_axil)
     );
