@@ -51,7 +51,6 @@ module lab5_top #(
             .i_err_unx_tlast        (w_err_unx_tlast),
             
             .o_length               (w_len),
-            .o_err                  (o_err),
 
             .s_axil                 (s_axil)
         );
@@ -65,7 +64,9 @@ module lab5_top #(
             ) m_axil();
 
         (* keep_hierarchy="yes" *)
-        axil_fifo axil_fifo_uut(
+        axil_fifo#(
+            .FEATURES ('{ '1,'1,'1,'1,'1 }) 
+        ) axil_fifo_uut(
 
             .s_axi_aclk_p      	(i_clk),
             .m_axi_aclk_p      	(i_clk),
@@ -93,7 +94,6 @@ module lab5_top #(
             .i_err_unx_tlast        (w_err_unx_tlast),
             
             .o_length               (w_len),
-            .o_err                  (o_err),
 
             .s_axil                 (m_axil)
         );

@@ -134,6 +134,7 @@ module tb_lab5_top #(
 			`MACRO_AXIL_HSK(arready, arvalid);
 		// read data
 			m_axil.rresp = 2'b00;
+			m_axil.rready = 1;
 			`MACRO_AXIL_HSK(rvalid, rready);
 			DATA = m_axil.rdata;
 		end
@@ -184,30 +185,17 @@ module tb_lab5_top #(
 
 		t_axil_init;
 		w_length = 16;
-
 		#5;
-		t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length));
-		// #5;
-		// t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length + 3));
-		// #5;
-		// t_axil_wr(.ADDR(TST_ADDR), .DATA(w_length + 7));
-		// #5;
-		// t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length + 11));
-		// #5;
-		// t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length - 10));
-
-
+		t_axil_wr(.ADDR(LEN_ADDR), .DATA(w_length));
 		#5;
-		t_axil_rd(.ADDR(LEN1_ADDR), .DATA(w_length));
-		// #5;
-		// t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
-		// #5;
-		// t_axil_rd(.ADDR(TST_ADDR), .DATA(w_length));
-		// #5;
-		// t_axil_rd(.ADDR(ERR_ADDR), .DATA(w_length));
-		// #5;
-		// t_axil_rd(.ADDR(WRNG_ADDR), .DATA(w_length));
+		t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length - 6));
+		w_length = 0;
+		
 
+		#60;
+		t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
+
+		
 	end
 
     lab5_top #(

@@ -13,7 +13,6 @@ module lab5_reg_map # (
                     i_rst,
 
     output reg [(G_RM_DATA_B * 8) - 1 : 0]  o_length,
-                                            o_err,
 
     if_axil.s   s_axil
     );
@@ -27,23 +26,28 @@ module lab5_reg_map # (
     localparam t_xaddr LEN1_ADDR	= 'h02;
 	localparam t_xaddr ERR_ADDR     = 'h04;
     localparam t_xaddr TST_ADDR	 	= 'h05;   
-    t_xaddr WADDR, RADDR;  
+    t_xaddr WADDR, RADDR, t_addr;  
     
     reg [31 : 0]    RG_LEN = '0,
                     RG_STAT;
 
-    reg [7 : 0] q_data = '0;
+    reg [7 : 0]     q_wr_data = '0;
+    reg [31 : 0]    q_rd_data;
 
     logic   q_wena  = 0,
-            q_rena  = 0,  
-            q_wdena = 0;    
-    
+            q_wdena = 0,
+            q_rena  = 0,
+            q_rdena = 0;
 
+    logic   q_err_crc       = 0, 
+            q_err_mis_tlast = 0, 
+            q_err_unx_tlast = 0;    
+    
     assign o_length = RG_LEN [7 : 0];
 
-    assign RG_STAT = '{ 0       : i_err_crc, 
-                        8       : i_err_mis_tlast, 
-                        16      : i_err_unx_tlast,
+    assign RG_STAT = '{ 0       : q_err_crc, 
+                        8       : q_err_mis_tlast, 
+                        16      : q_err_unx_tlast,
                         default : 0 };
 
     task t_axil_init; 
@@ -57,6 +61,9 @@ module lab5_reg_map # (
             s_axil.bvalid   = 0;
             s_axil.bresp    = 0;
             q_wena          = 0;
+            q_wdena         = 0;
+            q_rena          = 0;
+            q_rdena         = 0;
 
         end
     endtask : t_axil_init
@@ -67,7 +74,8 @@ module lab5_reg_map # (
 
         if (s_axil.awready & s_axil.awvalid) begin
 
-            RADDR            <= s_axil.awaddr;
+            t_addr          <= s_axil.awaddr;
+            WADDR           <= s_axil.awaddr;
             q_wena          <= 1;
             s_axil.awready  <= 0;
 
@@ -77,93 +85,118 @@ module lab5_reg_map # (
 
         if (s_axil.wready & s_axil.wvalid &  q_wena) begin
 
-            q_data          <= s_axil.wdata;
-            q_wdena         <= 1;       
-            q_wena          <= 0;     
+            q_wr_data          <= s_axil.wdata;
+            q_wdena         <= 1;
+            q_wena          <= 0;
             s_axil.wready   <= 0;
 
         end 
 
         if (q_wdena) begin
 
-            case(RADDR)
+            case(WADDR)
 
                 LEN_ADDR :
 
-                    RG_LEN [7 : 0] <= q_data;
+                    RG_LEN [7 : 0] <= q_wr_data;
 
                 LEN1_ADDR : 
 
-                    RG_LEN [31 : 24] <= q_data;
+                    RG_LEN [31 : 24] <= q_wr_data;
 
                 TST_ADDR : 
 
-                    RG_LEN [15 : 8] <= q_data;
+                    RG_LEN [15 : 8] <= q_wr_data;
 
                 default : 
 
-                    RG_LEN [23 : 16] <= q_data;
+                    RG_LEN [23 : 16] <= q_wr_data;
 
-            endcase
+            endcase 
 
             q_wdena <= 0;
-            s_axil.bvalid <= 1;
 
         end
 
-        if (s_axil.bvalid & s_axil.bready) begin
+        s_axil.bvalid <= 0;
 
-                s_axil.bresp    <= '0;
-                s_axil.bvalid   <=  0;
+        if (s_axil.bready) begin
 
-            end
+            s_axil.bresp    <= '0;
+            s_axil.bvalid   <= 1;
+
+        end 
 
         s_axil.arready <= 1;
 
         if (s_axil.arready & s_axil.arvalid) begin
 
-            WADDR           <= s_axil.araddr;
-            s_axil.arready  <= 0;
+            t_addr          <= s_axil.araddr;
+            RADDR           <= s_axil.araddr;
             q_rena          <= 1;
+            s_axil.arready  <= 0;
 
         end 
 
-        s_axil.rvalid <= 1;
+        if (q_rena) begin
 
-        if (s_axil.rvalid & s_axil.rready) begin
-
-            case(WADDR)
+            case (RADDR)
 
                 LEN_ADDR :
 
-                    s_axil.rdata <= RG_LEN [7 : 0];
+                    q_rd_data <= RG_LEN [7 : 0];
 
-                LEN1_ADDR :
+                LEN1_ADDR : 
 
-                    s_axil.rdata <= RG_LEN [31 : 24];
-
-                ERR_ADDR :
-
-                    s_axil.rdata <= RG_STAT;
+                    q_rd_data <= RG_LEN [31 : 24];
 
                 TST_ADDR : 
 
-                    s_axil.rdata <= RG_LEN [15 : 8];
+                    q_rd_data <= RG_LEN [15 : 8];
 
-                default : 
+                ERR_ADDR :
 
-                    s_axil.rdata <= '0;
+                    q_rd_data <= RG_STAT;
+
+                default :
+                
+                    q_rd_data <= '0;
 
             endcase
-
-            s_axil.rvalid   <= 0;
-            q_rena          <= 0;
+            
+            q_rena  <= 0;
+            q_rdena <= 1;
 
         end
 
+        s_axil.rvalid <= 1;
+
+        if (q_rdena) begin
+
+            s_axil.rdata    <= q_rd_data;
+            q_rdena         <= 0;
+
+        end
+
+        if (s_axil.rvalid & s_axil.rready) 
+            s_axil.rvalid <= 0;
+        
         if (i_rst) 
             t_axil_init;
-    
+
+
+        if (i_err_crc) q_err_crc <= 1;
+        if (i_err_mis_tlast) q_err_mis_tlast <= 1;
+        if (i_err_unx_tlast) q_err_unx_tlast <= 1;
+
+        if (s_axil.rvalid) begin
+
+            q_err_crc       <= i_err_crc;
+            q_err_mis_tlast <= i_err_mis_tlast;
+            q_err_unx_tlast <= i_err_unx_tlast;
+
+        end
+
     end
 
 endmodule
