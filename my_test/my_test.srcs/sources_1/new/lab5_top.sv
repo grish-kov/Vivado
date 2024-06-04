@@ -65,7 +65,8 @@ module lab5_top #(
 
         (* keep_hierarchy="yes" *)
         axil_fifo#(
-            .FEATURES ('{ '1,'1,'1,'1,'1 }) 
+            .FEATURES           ('{ '1,'1,'1,'1,'1 }),
+            .DUAL_CLOCK         ("False")
         ) axil_fifo_uut(
 
             .s_axi_aclk_p      	(i_clk),

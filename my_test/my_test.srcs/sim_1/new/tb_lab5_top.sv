@@ -15,6 +15,8 @@ module tb_lab5_top #(
 
     logic i_clk 	= 1;
 
+	logic [15 : 0] i_fifo;
+
     reg [7 : 0] 				w_length;
 	reg [2 : 0]					i_rst_pkt = '0;
 	reg [C_RM_DATA_W - 1 : 0]	w_err;
@@ -36,7 +38,7 @@ module tb_lab5_top #(
 			m_axil.wvalid  = '0;
 			m_axil.wdata   = '0;
 			m_axil.wstrb   = '0;
-			m_axil.bready  = '0;
+			m_axil.bready  = '1;
 			m_axil.arvalid = '0;
 			m_axil.araddr  = '0;
 			m_axil.rready  = '0;
@@ -49,10 +51,9 @@ module tb_lab5_top #(
     `define MACRO_AXIL_HSK(miso, mosi) \
 		m_axil.``mosi``= '1; \
 		do begin \
-			#dt; \
+			#1.1; \
 		end while (!(m_axil.``miso`` && m_axil.``mosi``)); \
 		m_axil.``mosi`` = '0; \
-
 
     task t_axil_wr;
 		input t_xaddr ADDR;
@@ -66,7 +67,7 @@ module tb_lab5_top #(
 			m_axil.wstrb = '1;
 			`MACRO_AXIL_HSK(wready, wvalid);
 		// write response
-			`MACRO_AXIL_HSK(bvalid, bready);
+			// `MACRO_AXIL_HSK_RESP(bvalid, bready);
 		end
 	endtask : t_axil_wr
 
@@ -183,6 +184,7 @@ module tb_lab5_top #(
 
 	initial begin
 
+		#1.1;
 		t_axil_init;
 		w_length = 16;
 		#5;
@@ -190,17 +192,19 @@ module tb_lab5_top #(
 		#5;
 		t_axil_wr(.ADDR(LEN1_ADDR), .DATA(w_length - 6));
 		w_length = 0;
-		
 
-		#60;
+		#10;
 		t_axil_rd(.ADDR(LEN_ADDR), .DATA(w_length));
+		i_fifo = '1;
+		#5;
+		t_axil_rd(.ADDR(LEN1_ADDR), .DATA(w_length));
 
 		
 	end
 
     lab5_top #(
 
-		.ENA_FIFO 			("False")
+		.ENA_FIFO 			("True")
 
  	) u_uut(
 
@@ -211,5 +215,28 @@ module tb_lab5_top #(
 
         .s_axil				(m_axil)
     );
+
+	// fifo fifo_uut(
+
+	// 	.i_fifo_a_rst_p			(i_fifo_a_rst_p),
+	// 	.i_fifo_w_rst_p			(i_fifo_w_rst_p),
+	// 	.i_fifo_w_clk_p			(i_fifo_w_clk_p),
+	// 	.i_fifo_w_valid			(i_fifo_w_valid),
+	// 	.i_fifo_w_value			(i_fifo),
+	// 	.o_fifo_w_tfull			(o_fifo_w_tfull),
+	// 	.o_fifo_a_tfull			(o_fifo_a_tfull),
+	// 	.o_fifo_p_tfull			(o_fifo_p_tfull),
+	// 	.o_fifo_w_count			(o_fifo_w_count),
+	// 	.i_fifo_r_rst_p			(i_fifo_r_rst_p),
+	// 	.i_fifo_r_clk_p			(i_fifo_r_clk_p),
+	// 	.i_fifo_r_query			(i_fifo_r_query),
+	// 	.o_fifo_r_valid			(o_fifo_r_valid),
+	// 	.o_fifo_r_value			(o_fifo_r_value),
+	// 	.o_fifo_r_empty			(o_fifo_r_empty),
+	// 	.o_fifo_a_empty			(o_fifo_a_empty),
+	// 	.o_fifo_p_empty			(o_fifo_p_empty),
+	// 	.o_fifo_r_count			(o_fifo_r_count) 
+
+	// );
 
 endmodule

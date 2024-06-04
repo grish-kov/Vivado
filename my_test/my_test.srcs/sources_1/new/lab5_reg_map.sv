@@ -114,16 +114,15 @@ module lab5_reg_map # (
 
             endcase 
 
-            q_wdena <= 0;
+            q_wdena         <= 0;
+            s_axil.bvalid   <= 1;
 
         end
 
-        s_axil.bvalid <= 0;
-
-        if (s_axil.bready) begin
+        if (s_axil.bvalid & s_axil.bready) begin
 
             s_axil.bresp    <= '0;
-            s_axil.bvalid   <= 1;
+            s_axil.bvalid   <= 0;
 
         end 
 
@@ -169,11 +168,11 @@ module lab5_reg_map # (
 
         end
 
-        s_axil.rvalid <= 1;
 
         if (q_rdena) begin
 
             s_axil.rdata    <= q_rd_data;
+            s_axil.rvalid <= 1;
             q_rdena         <= 0;
 
         end
@@ -185,11 +184,11 @@ module lab5_reg_map # (
             t_axil_init;
 
 
-        if (i_err_crc) q_err_crc <= 1;
-        if (i_err_mis_tlast) q_err_mis_tlast <= 1;
-        if (i_err_unx_tlast) q_err_unx_tlast <= 1;
+        if (i_err_crc       & !s_axil.rready)   q_err_crc       <= 1;
+        if (i_err_mis_tlast & !s_axil.rready)   q_err_mis_tlast <= 1;
+        if (i_err_unx_tlast & !s_axil.rready)   q_err_unx_tlast <= 1;
 
-        if (s_axil.rvalid) begin
+        if (s_axil.rready) begin
 
             q_err_crc       <= i_err_crc;
             q_err_mis_tlast <= i_err_mis_tlast;
