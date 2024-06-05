@@ -2,13 +2,13 @@
 
 module tb_lab5_top #(
 
-    int G_RM_ADDR_W = 4, 	// AXIL xADDR bit width
-	int G_RM_DATA_B = 4, 	// AXIL xDATA number of bytes (B)
+    int G_ADDR_W = 4, 		// AXIL xADDR bit width
+	int G_DATA_B = 4, 		// AXIL xDATA number of bytes (B)
 	real dt = 1.0 			// clock period ns
 
     );
 
-    localparam C_RM_DATA_W = 8 * G_RM_DATA_B;
+    localparam C_DATA_W = 8 * G_DATA_B;
 	localparam logic ena_rst = 1;
 
     logic i_rst, i_rst_n;
@@ -19,14 +19,15 @@ module tb_lab5_top #(
 
     reg [7 : 0] 				w_length;
 	reg [2 : 0]					i_rst_pkt = '0;
-	reg [C_RM_DATA_W - 1 : 0]	w_err;
+	reg [C_DATA_W - 1 : 0]	w_err;
 
-    typedef logic [G_RM_ADDR_W - 1 : 0] t_xaddr;
-	typedef logic [C_RM_DATA_W - 1 : 0] t_xdata;
+    typedef logic [G_ADDR_W - 1 : 0] t_xaddr;
+	typedef logic [C_DATA_W - 1 : 0] t_xdata;
 
 	if_axil #(
-		.N		(G_RM_DATA_B), 
-		.A		(G_RM_ADDR_W)
+		.N(G_DATA_B), 
+		.A(G_ADDR_W), 
+		.PAYMASK(5'b01101)
 		) m_axil ();
 
 
@@ -215,28 +216,5 @@ module tb_lab5_top #(
 
         .s_axil				(m_axil)
     );
-
-	// fifo fifo_uut(
-
-	// 	.i_fifo_a_rst_p			(i_fifo_a_rst_p),
-	// 	.i_fifo_w_rst_p			(i_fifo_w_rst_p),
-	// 	.i_fifo_w_clk_p			(i_fifo_w_clk_p),
-	// 	.i_fifo_w_valid			(i_fifo_w_valid),
-	// 	.i_fifo_w_value			(i_fifo),
-	// 	.o_fifo_w_tfull			(o_fifo_w_tfull),
-	// 	.o_fifo_a_tfull			(o_fifo_a_tfull),
-	// 	.o_fifo_p_tfull			(o_fifo_p_tfull),
-	// 	.o_fifo_w_count			(o_fifo_w_count),
-	// 	.i_fifo_r_rst_p			(i_fifo_r_rst_p),
-	// 	.i_fifo_r_clk_p			(i_fifo_r_clk_p),
-	// 	.i_fifo_r_query			(i_fifo_r_query),
-	// 	.o_fifo_r_valid			(o_fifo_r_valid),
-	// 	.o_fifo_r_value			(o_fifo_r_value),
-	// 	.o_fifo_r_empty			(o_fifo_r_empty),
-	// 	.o_fifo_a_empty			(o_fifo_a_empty),
-	// 	.o_fifo_p_empty			(o_fifo_p_empty),
-	// 	.o_fifo_r_count			(o_fifo_r_count) 
-
-	// );
 
 endmodule

@@ -3,8 +3,8 @@
 module lab5_top #(
 
     parameter ENA_FIFO = "False",
-    int G_RM_ADDR_W = 4,    // AXIL xADDR bit width
-	int G_RM_DATA_B = 4 
+    int G_ADDR_W = 4,    // AXIL xADDR bit width
+	int G_DATA_B = 4 
 
 )(
 
@@ -39,8 +39,8 @@ module lab5_top #(
         (* keep_hierarchy="yes" *)
         lab5_reg_map# (
 
-            .G_RM_ADDR_W(G_RM_ADDR_W),
-            .G_RM_DATA_B(G_RM_DATA_B)
+            .G_ADDR_W(G_ADDR_W),
+            .G_DATA_B(G_DATA_B)
 
         ) reg_map_uut (
             
@@ -59,8 +59,9 @@ module lab5_top #(
     else if (ENA_FIFO == "True") begin
 
         if_axil#(
-            .N(G_RM_DATA_B), 
-            .A(G_RM_ADDR_W)
+            .N(G_DATA_B), 
+            .A(G_ADDR_W), 
+            .PAYMASK(5'b01101)
             ) m_axil();
 
         (* keep_hierarchy="yes" *)
@@ -83,8 +84,8 @@ module lab5_top #(
         (* keep_hierarchy="yes" *)
         lab5_reg_map# (
 
-            .G_RM_ADDR_W(G_RM_ADDR_W),
-            .G_RM_DATA_B(G_RM_DATA_B)
+            .G_RM_ADDR_W(G_ADDR_W),
+            .G_RM_DATA_B(G_DATA_B)
 
         ) reg_map_uut (
             
