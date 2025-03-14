@@ -4,6 +4,7 @@
 !/*TODO*
 !*.md
 !*.tcl
+!*.png
 #!*.wcfg
 
 # do not ignore sources folder except (mostly) temporary files
