@@ -37,6 +37,7 @@
 
 - В меню Vivado в контекстном меню выбрать Tools -> Create and Package New IP... (рисунок 1)
 
+
 Рисунок 1
 ![pic1](pic1.png)
 
